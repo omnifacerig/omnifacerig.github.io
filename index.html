@@ -1,0 +1,2843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OmniFaceRig: Fully Automatic Inner-Mouth-Aware Face Rigging</title>
+  <meta name="description" content="A fully automatic, end-to-end face auto-rigging pipeline that converts surface-only 3D meshes into inner-mouth-aware FACS rigs across diverse character topologies." />
+  <meta name="keywords" content="OmniFaceRig, face rigging, automatic face rigging, auto-rigging, FACS, facial blendshapes, blendshapes, inner-mouth geometry, 3D character rigging, facial animation, character animation, 3D avatars, rigged characters, mesh rigging, face parsing, Omni-Bench, 3D character dataset, Reality Labs, Meta" />
+  <meta name="author" content="Chao Wang, Guangyao Ma, John Doublestein, Junming Chen, Yiming Lin, Zhaoen Su, Xiaomin Luo, Shiyang Cheng, Jie Shen, Doug Roble, Dilin Wang, Yilei Li, Rakesh Ranjan" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://omnifacerig.github.io/" />
+
+  <!-- Open Graph (link previews on social / chat) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="OmniFaceRig" />
+  <meta property="og:url" content="https://omnifacerig.github.io/" />
+  <meta property="og:title" content="OmniFaceRig: Fully Automatic Inner-Mouth-Aware Face Rigging Across Diverse 3D Character Topologies" />
+  <meta property="og:description" content="A fully automatic end-to-end pipeline turning static surface-only 3D meshes into inner-mouth-aware FACS rigs across humans, humanoids, and animals — no manual landmarks or templates. Includes the Omni-Bench dataset of 1,000 rigged characters." />
+  <meta property="og:image" content="https://omnifacerig.github.io/assets/cover_image.png" />
+
+  <!-- Twitter / X card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="OmniFaceRig: Fully Automatic Inner-Mouth-Aware Face Rigging" />
+  <meta name="twitter:description" content="Automatic FACS face rigging with generated inner-mouth geometry across humans, humanoids, and animals. Plus the Omni-Bench dataset." />
+  <meta name="twitter:image" content="https://omnifacerig.github.io/assets/cover_image.png" />
+
+  <!-- Structured data for search engines / Google Scholar -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ScholarlyArticle",
+    "headline": "OmniFaceRig: Fully Automatic Inner-Mouth-Aware Face Rigging Across Diverse 3D Character Topologies",
+    "name": "OmniFaceRig",
+    "url": "https://omnifacerig.github.io/",
+    "author": [
+      {"@type":"Person","name":"Chao Wang"},
+      {"@type":"Person","name":"Guangyao Ma"},
+      {"@type":"Person","name":"John Doublestein"},
+      {"@type":"Person","name":"Junming Chen"},
+      {"@type":"Person","name":"Yiming Lin"},
+      {"@type":"Person","name":"Zhaoen Su"},
+      {"@type":"Person","name":"Xiaomin Luo"},
+      {"@type":"Person","name":"Shiyang Cheng"},
+      {"@type":"Person","name":"Jie Shen"},
+      {"@type":"Person","name":"Doug Roble"},
+      {"@type":"Person","name":"Dilin Wang"},
+      {"@type":"Person","name":"Yilei Li"},
+      {"@type":"Person","name":"Rakesh Ranjan"}
+    ],
+    "publisher": {"@type":"Organization","name":"Reality Labs, Meta"},
+    "keywords": "face rigging, FACS, blendshapes, inner-mouth geometry, 3D character rigging, Omni-Bench",
+    "image": "https://omnifacerig.github.io/assets/cover_image.png"
+  }
+  </script>
+  <link rel="preconnect" href="https://rsms.me/" crossorigin />
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <!-- Three.js (real lighting + shadows) — replaces model-viewer in this build -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "./libs/three.module.js",
+      "three/addons/": "./libs/jsm/"
+    }
+  }
+  </script>
+  <style>
+    /* ===== Reset & base ===== */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #ffffff;
+      color: #1c1e21;
+      line-height: 1.7;
+      font-size: 17px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    @supports (font-variation-settings: normal) {
+      body { font-family: 'Inter var', 'Inter', sans-serif; }
+    }
+
+    /* ===== Layout ===== */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 32px;
+    }
+    .container-wide {
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 0 32px;
+    }
+    section {
+      padding: 100px 0;
+      border-bottom: 1px solid #e4e6eb;
+    }
+    section:last-of-type { border-bottom: none; }
+
+    /* ===== Hero (dark with video bg) ===== */
+    .hero {
+      position: relative;
+      padding: 210px 0 180px;
+      text-align: center;
+      border-bottom: 1px solid #e4e6eb;
+      overflow: hidden;
+      isolation: isolate;
+      background: #0a0b10;
+    }
+    .hero-bg-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(0.32) saturate(1.1);
+      z-index: -2;
+      pointer-events: none;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 50% 60% at 50% 48%, rgba(10, 11, 16, 0.55), transparent 100%),
+        radial-gradient(ellipse 35% 30% at 50% 45%, rgba(139, 92, 246, 0.06), transparent 65%);
+      z-index: -1;
+      pointer-events: none;
+    }
+    .hero > .container { position: relative; z-index: 1; }
+    .hero h1 {
+      margin-bottom: 26px;
+      max-width: 1000px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .hero .title-brand {
+      font-family: 'Space Grotesk', 'Inter', -apple-system, sans-serif;
+      display: block;
+      font-size: 96px;
+      font-weight: 700;
+      letter-spacing: -0.045em;
+      line-height: 0.95;
+      margin-bottom: 26px;
+      background: linear-gradient(135deg, #7c3aed 0%, #0668E1 45%, #0891b2 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+    }
+    .hero .title-sub {
+      font-family: 'Space Grotesk', 'Inter', -apple-system, sans-serif;
+      display: block;
+      font-size: 30px;
+      font-weight: 500;
+      line-height: 1.35;
+      letter-spacing: -0.015em;
+      color: rgba(255,255,255,0.92);
+    }
+    .hero .authors {
+      font-size: 18px;
+      color: rgba(255,255,255,0.78);
+      margin-top: 38px;
+      margin-bottom: 6px;
+      line-height: 1.7;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .hero .authors .author-corresponding {
+      color: #7dd3fc;
+      font-weight: 600;
+    }
+    .hero .authors .author-lead {
+      color: #a78bfa;
+      font-weight: 600;
+    }
+    .hero .authors .author-cofirst {
+      font-weight: 600;
+    }
+    .hero .authors sup {
+      font-size: 12px;
+      color: #7dd3fc;
+      margin-left: 1px;
+    }
+    .hero .affiliation {
+      font-size: 16px;
+      color: rgba(255,255,255,0.50);
+      margin-bottom: 8px;
+    }
+    .hero .author-notes {
+      font-size: 14px;
+      color: rgba(255,255,255,0.40);
+      margin-bottom: 24px;
+    }
+    .hero .venue {
+      display: inline-block;
+      padding: 7px 18px;
+      background: rgba(6, 104, 225, 0.06);
+      border: 1px solid rgba(6, 104, 225, 0.30);
+      border-radius: 8px;
+      font-size: 12px;
+      color: #0668E1;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .hero .action-buttons {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 28px;
+    }
+    .hero .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 24px;
+      background: #0668E1;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      letter-spacing: 0.02em;
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+    .hero .action-btn:hover {
+      background: #0559C1;
+      transform: translateY(-1px);
+    }
+    .hero .action-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: #fff;
+      flex-shrink: 0;
+    }
+
+    /* ===== Sticky top navigation ===== */
+    .topnav {
+      position: fixed;
+      top: 18px;
+      right: 24px;
+      z-index: 100;
+      display: flex;
+      gap: 4px;
+      padding: 6px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid #e4e6eb;
+      border-radius: 999px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    }
+    .topnav a {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 16px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: #444950;
+      text-decoration: none;
+      border-radius: 999px;
+      letter-spacing: 0.01em;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .topnav a:hover {
+      background: rgba(6, 104, 225, 0.08);
+      color: #0668E1;
+    }
+    .topnav a.active {
+      background: #0668E1;
+      color: #fff;
+    }
+
+    /* ===== Section header ===== */
+    .section-label {
+      display: block;
+      font-size: 40px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      line-height: 1.1;
+      text-transform: none;
+      color: #0668E1;
+      margin-bottom: 12px;
+    }
+    .section-h2 {
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: 0;
+      margin-bottom: 44px;
+      color: #65676b;
+      line-height: 1.55;
+    }
+
+    /* ===== Abstract ===== */
+    .abstract p {
+      font-size: 17px;
+      line-height: 1.75;
+      color: #1c1e21;
+      text-align: justify;
+    }
+    .abstract p + p { margin-top: 18px; }
+    .abstract strong {
+      color: #1c1e21;
+      font-weight: 700;
+    }
+
+    /* ===== Video ===== */
+    /* ===== Teaser (Figure 1, below the demo video) ===== */
+    .teaser {
+      max-width: 1100px;
+      margin: 64px auto 0;
+    }
+    .teaser img {
+      width: 100%;
+      display: block;
+      border-radius: 12px;
+      border: 1px solid #e4e6eb;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+    .teaser-caption {
+      margin-top: 18px;
+      font-size: 15px;
+      line-height: 1.7;
+      color: #65676b;
+      text-align: left;
+    }
+    .teaser-caption strong { color: #1c1e21; font-weight: 700; }
+    .video-frame {
+      position: relative;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      aspect-ratio: 16 / 9;
+      background: #f0f2f5;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #e4e6eb;
+      box-shadow: 0 8px 36px rgba(0, 0, 0, 0.06);
+    }
+    .video-frame video {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .video-poster {
+      position: absolute;
+      inset: 0;
+      background: transparent;
+      isolation: isolate;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: opacity 0.35s ease;
+      z-index: 2;
+      padding: 32px;
+      text-align: center;
+    }
+    .video-poster::before { display: none; }
+    .video-poster::after { display: none; }
+    .video-poster.hidden { opacity: 0; pointer-events: none; }
+    .video-poster .poster-title {
+      font-size: 56px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      line-height: 1.0;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #38bdf8 0%, #ffffff 50%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+    }
+    .video-poster .poster-sub {
+      font-size: 18px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.85);
+      max-width: 700px;
+      line-height: 1.4;
+      margin-bottom: 36px;
+    }
+    .video-poster .poster-play {
+      width: 78px;
+      height: 78px;
+      border-radius: 50%;
+      background: rgba(14, 165, 233, 0.95);
+      border: none;
+      color: #fff;
+      font-size: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 8px 28px rgba(14, 165, 233, 0.45);
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    .video-poster .poster-play:hover {
+      transform: scale(1.08);
+      background: #0ea5e9;
+    }
+    .video-poster .poster-play::before {
+      content: "\25B6";
+      margin-left: 4px;
+    }
+
+    /* ===== Carousel ===== */
+    .carousel {
+      position: relative;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .carousel-track {
+      width: 100%;
+      overflow: hidden;
+      border-radius: 10px;
+      background: #f8f9fa;
+      border: 1px solid #e4e6eb;
+    }
+    .carousel-slides {
+      display: flex;
+      transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .carousel-slide {
+      min-width: 100%;
+      padding: 20px;
+    }
+    .carousel-slide img {
+      width: 100%;
+      display: block;
+      border-radius: 6px;
+    }
+    .carousel-slide .caption {
+      margin-top: 16px;
+      font-size: 14px;
+      color: #65676b;
+      line-height: 1.6;
+      text-align: left;
+    }
+    .carousel-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 48px;
+      height: 48px;
+      background: rgba(255, 255, 255, 0.9);
+      color: #1c1e21;
+      border: 1px solid #e4e6eb;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease, transform 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+      z-index: 10;
+    }
+    .carousel-arrow:hover {
+      background: #0668E1;
+      color: #fff;
+      border-color: #0668E1;
+      transform: translateY(-50%) scale(1.06);
+    }
+    .carousel-arrow.prev { left: -24px; }
+    .carousel-arrow.next { right: -24px; }
+    .carousel-dots {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 24px;
+    }
+    .carousel-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ccd0d5;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+    .carousel-dot:hover { background: #8a8d91; }
+    .carousel-dot.active {
+      background: #0668E1;
+      transform: scale(1.3);
+    }
+    .carousel-counter {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 13px;
+      color: #8a8d91;
+      letter-spacing: 0.04em;
+    }
+
+    /* ===== Pipeline ===== */
+    .pipeline-image {
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .pipeline-image img {
+      width: 100%;
+      display: block;
+      border-radius: 10px;
+      border: 1px solid #e4e6eb;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+    .pipeline-image .caption {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #65676b;
+      line-height: 1.7;
+      text-align: left;
+    }
+
+    /* ===== Dataset (Omni-Bench) ===== */
+    .dataset-figure {
+      max-width: 1100px;
+      margin: 0 auto 40px;
+    }
+    .dataset-figure img {
+      width: 100%;
+      display: block;
+      border-radius: 12px;
+      border: 1px solid #e4e6eb;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+    .dataset-figure .caption {
+      margin-top: 16px;
+      font-size: 13px;
+      color: #65676b;
+      text-align: left;
+      line-height: 1.6;
+    }
+    .dataset-text {
+      max-width: 1100px;
+      margin: 0 auto 56px;
+      font-size: 17px;
+      line-height: 1.75;
+      color: #1c1e21;
+      text-align: justify;
+    }
+    .dataset-text p + p { margin-top: 18px; }
+    .dataset-text strong { color: #1c1e21; font-weight: 700; }
+
+    .dataset-table-title {
+      max-width: 1200px;
+      margin: 0 auto 16px;
+      text-align: center;
+      font-size: 14px;
+      color: #65676b;
+      letter-spacing: 0.04em;
+    }
+    .dataset-table-title strong { color: #0668E1; font-weight: 700; }
+    .dataset-table-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid #e4e6eb;
+      background: #ffffff;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    }
+    .dataset-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .dataset-table th,
+    .dataset-table td {
+      padding: 14px 16px;
+      text-align: center;
+      border-bottom: 1px solid #e4e6eb;
+    }
+    .dataset-table thead th {
+      background: #f8f9fa;
+      font-weight: 600;
+      color: #1c1e21;
+      font-size: 13px;
+      letter-spacing: 0.02em;
+      border-bottom: 2px solid #ccd0d5;
+    }
+    .dataset-table tbody td:first-child {
+      text-align: left;
+      font-weight: 500;
+      color: #1c1e21;
+    }
+    .dataset-table tbody tr:last-child td { border-bottom: none; }
+    .dataset-table tbody tr.ours {
+      background: linear-gradient(90deg, rgba(6, 104, 225, 0.08), rgba(6, 104, 225, 0.03));
+    }
+    .dataset-table tbody tr.ours td {
+      font-weight: 700;
+      color: #0668E1;
+      border-top: 2px solid #0668E1;
+    }
+    .dataset-table .yes { color: #16a34a; font-weight: 700; }
+    .dataset-table .no  { color: #ccd0d5; }
+    .dataset-table .num { font-variant-numeric: tabular-nums; }
+
+    /* ===== Citation ===== */
+    .citation-prompt {
+      font-size: 17px;
+      color: #444950;
+      margin-bottom: 20px;
+    }
+    .citation-block {
+      position: relative;
+      background: #f8f9fa;
+      border: 1px solid #e4e6eb;
+      border-radius: 10px;
+      padding: 24px 28px;
+      overflow-x: auto;
+    }
+    .citation-block pre {
+      margin: 0;
+      font-family: 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
+      font-size: 13px;
+      line-height: 1.65;
+      color: #1c1e21;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .citation-copy {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      padding: 5px 14px;
+      background: #0668E1;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .citation-copy:hover { background: #0559C1; }
+
+    /* ===== Footer ===== */
+    /* ===== Highlight stats (after Abstract) ===== */
+    .highlight-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(215px,1fr)); gap:16px; margin:48px 0 0; }
+    .highlight-stats .hl { background:#ffffff; border:1px solid #e4e6eb; border-radius:14px; padding:22px 22px; }
+    .highlight-stats .hl-num { font-family:'Space Grotesk','Inter',sans-serif; font-size:34px; font-weight:700; line-height:1.05; color:#0668E1; }
+    .highlight-stats .hl-desc { margin-top:8px; font-size:13px; line-height:1.55; color:#65676b; }
+    /* ===== Quantitative results cards ===== */
+    .quant-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; max-width:1100px; margin:44px auto 0; }
+    .quant-card { background:#ffffff; border:1px solid #e4e6eb; border-radius:14px; padding:22px 18px; text-align:center; }
+    .quant-num { font-family:'Space Grotesk','Inter',sans-serif; font-size:30px; font-weight:700; color:#0668E1; line-height:1.1; }
+    .quant-label { margin-top:8px; font-size:13px; color:#65676b; line-height:1.5; }
+    /* ===== Pipeline stage cards ===== */
+    .pipeline-stages { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; max-width:1100px; margin:24px auto 0; }
+    .pipeline-stages .stage-card { background:#ffffff; border:1px solid #e4e6eb; border-radius:14px; padding:22px 24px; }
+    .pipeline-stages .stage-card h3 { font-family:'Space Grotesk','Inter',sans-serif; font-size:17px; font-weight:700; color:#0668E1; margin-bottom:10px; }
+    .pipeline-stages .stage-card p { font-size:14px; line-height:1.7; color:#444950; margin:0; }
+    footer {
+      padding: 60px 0;
+      text-align: center;
+      font-size: 13px;
+      color: #8a8d91;
+      border-top: 1px solid #e4e6eb;
+    }
+
+    /* ============================================================
+       GLB Showcase — Meta light theme
+       ============================================================ */
+    .showcase-note {
+      font-size: 15px;
+      color: #65676b;
+      max-width: 1100px;
+      margin: 0 0 36px 0;
+      line-height: 1.75;
+      text-align: left;
+    }
+    .showcase-note strong { color: #1c1e21; font-weight: 600; }
+    .showcase {
+      max-width: 1360px;
+      margin: 0 auto;
+    }
+    .showcase .row-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    .showcase .asset-block {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      background: #ffffff;
+      border: 1px solid #e4e6eb;
+      border-radius: 14px;
+      padding: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    .showcase .asset-block:hover {
+      box-shadow: 0 8px 28px rgba(6, 104, 225, 0.12);
+      transform: translateY(-2px);
+    }
+    .asset-block .col-image, .asset-block .col-viewer {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      background: #f0f2f5;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .asset-block .col-image {
+      background: #f0f2f5;
+    }
+    .asset-block .col-image img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .asset-block .col-tag {
+      position: absolute;
+      top: 10px; left: 10px;
+      padding: 4px 12px;
+      font-size: 12px;
+      color: #1a1a1a;
+      font-weight: 700;
+      border-radius: 999px;
+      letter-spacing: 0.02em;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+      z-index: 4;
+    }
+    .asset-block .col-label {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      padding: 6px 10px;
+      font-size: 11px;
+      color: #fff;
+      background: linear-gradient(to top, rgba(0,0,0,0.65), rgba(0,0,0,0.0));
+      text-align: center;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 600;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .asset-block .placeholder {
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, #f0f2f5 0%, #e4e6eb 100%);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .asset-block .placeholder.no-button { cursor: default; }
+    .asset-block .placeholder:hover:not(.no-button) {
+      background: linear-gradient(135deg, #e4e6eb 0%, #dddfe2 100%);
+    }
+    .asset-block .load-btn {
+      position: absolute;
+      top: 10px; right: 10px;
+      padding: 5px 12px;
+      background: #0668E1;
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+      transition: background 0.15s ease, transform 0.15s ease;
+      z-index: 6;
+    }
+    .asset-block .load-btn:hover {
+      background: #0559C1;
+      transform: scale(1.05);
+    }
+    .asset-block .ph-label {
+      position: absolute;
+      left: 0; right: 0; bottom: 14px;
+      padding: 4px 8px;
+      font-size: 11px;
+      color: #8a8d91;
+      text-align: center;
+      word-break: break-all;
+    }
+    .asset-block .compare-wrap {
+      position: absolute; inset: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .asset-block .compare-wrap .cell-canvas {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      display: block;
+    }
+    .asset-block .input-catcher {
+      position: absolute; inset: 0;
+      z-index: 8;
+      cursor: grab;
+      touch-action: none;
+    }
+    .asset-block .input-catcher.dragging { cursor: grabbing; }
+    .asset-block .splitter {
+      position: absolute;
+      top: 0; bottom: 0;
+      left: 50%;
+      width: 3px;
+      background: rgba(6, 104, 225, 0.9);
+      transform: translateX(-50%);
+      cursor: ew-resize;
+      z-index: 10;
+      box-shadow: 0 0 6px rgba(0,0,0,0.2);
+    }
+    .asset-block .splitter .handle {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 22px; height: 22px;
+      background: #ffffff;
+      border: 1px solid #0668E1;
+      border-radius: 50%;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; color: #0668E1;
+    }
+    .asset-block .splitter .handle::before { content: "\25C4 \25BA"; letter-spacing: -2px; }
+    .asset-block .hint {
+      position: absolute;
+      top: 6px;
+      padding: 2px 7px;
+      background: rgba(0,0,0,0.55);
+      color: #fff;
+      font-size: 10px;
+      border-radius: 3px;
+      pointer-events: none;
+      z-index: 11;
+    }
+    .asset-block .hint-left { left: 6px; }
+    .asset-block .hint-right { right: 6px; }
+    .asset-block .expand-btn {
+      position: absolute;
+      bottom: 18px;
+      right: 6px;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 3px;
+      font-size: 12px;
+      cursor: pointer;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    .asset-block .expand-btn:hover {
+      background: rgba(0,0,0,0.9);
+      border-color: #888;
+    }
+    /* Modal (dark overlay for fullscreen 3D inspection — stays dark) */
+    #showcase-modal {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    #showcase-modal.open { display: flex; }
+    #showcase-modal .modal-slot {
+      position: relative;
+      width: 92vw;
+      height: 78vh;
+      max-width: 1700px;
+      background: #1a1a1a;
+      border-radius: 8px;
+      box-shadow: 0 0 40px rgba(0,0,0,0.8);
+      overflow: hidden;
+      padding: 0;
+    }
+    #showcase-modal .modal-slot > .asset-block {
+      display: flex !important;
+      flex-direction: row;
+      gap: 8px;
+      position: absolute;
+      inset: 8px;
+      width: auto;
+      height: auto;
+      box-sizing: border-box;
+      background: #1a1a1a;
+      border: none;
+      border-radius: 6px;
+      padding: 0;
+      box-shadow: none;
+      transform: none;
+    }
+    #showcase-modal .modal-slot .col-image {
+      display: none !important;
+    }
+    #showcase-modal .modal-slot .col-viewer {
+      flex: 1 1 50%;
+      width: 50%;
+      height: 100%;
+      aspect-ratio: auto !important;
+      min-width: 0;
+      min-height: 0;
+      background: #1a1a1a;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    #showcase-modal .modal-slot .asset-block:hover {
+      transform: none;
+      box-shadow: none;
+    }
+    #showcase-modal .modal-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 32px; height: 32px;
+      padding: 0;
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      border: 1px solid #777;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 25;
+      line-height: 1;
+    }
+    #showcase-modal .modal-close:hover { background: rgba(0,0,0,0.95); border-color: #fff; }
+
+    /* ===== Showcase category rows ===== */
+    .showcase-category {
+      margin-bottom: 48px;
+    }
+    .showcase-category:last-child { margin-bottom: 0; }
+
+    .category-header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .category-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1c1e21;
+      margin: 0;
+    }
+    .category-count {
+      font-size: 14px;
+      color: #65676b;
+    }
+
+    .category-viewer {
+      position: relative;
+    }
+    .category-viewer .asset-block {
+      display: none;
+    }
+    .category-viewer .asset-block.active {
+      display: grid;
+    }
+
+    .category-thumbs {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      overflow-x: auto;
+      padding: 4px 0;
+    }
+    .category-thumbs .thumb {
+      flex-shrink: 0;
+      width: 72px;
+      height: 72px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: border-color 0.15s ease, transform 0.15s ease;
+      opacity: 0.7;
+    }
+    .category-thumbs .thumb:hover {
+      opacity: 1;
+      transform: translateY(-2px);
+    }
+    .category-thumbs .thumb.active {
+      border-color: #0668E1;
+      opacity: 1;
+    }
+    .category-thumbs .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* ===== Mobile ===== */
+    @media (max-width: 768px) {
+      body { font-size: 16px; }
+      .hero { padding: 70px 0 50px; }
+      .hero .title-brand { font-size: 38px; }
+      .hero .title-sub { font-size: 17px; }
+      .hero .authors { font-size: 15px; }
+      .topnav { top: 10px; right: 12px; padding: 4px; gap: 2px; }
+      .topnav a { padding: 6px 10px; font-size: 11px; }
+      section { padding: 60px 0; }
+      .section-label { font-size: 28px; }
+      .section-h2 { font-size: 16px; margin-bottom: 32px; }
+      .carousel-arrow { width: 40px; height: 40px; font-size: 18px; }
+      .carousel-arrow.prev { left: 8px; }
+      .carousel-arrow.next { right: 8px; }
+      .showcase .row-grid { grid-template-columns: 1fr; gap: 16px; }
+      .showcase .asset-block { grid-template-columns: 1fr; }
+      .video-poster .poster-title { font-size: 36px; }
+      .video-poster .poster-sub { font-size: 14px; margin-bottom: 24px; }
+      .video-poster .poster-play { width: 60px; height: 60px; font-size: 22px; }
+      .dataset-table { font-size: 12px; }
+      .dataset-table th, .dataset-table td { padding: 10px 8px; }
+      .category-thumbs .thumb { width: 56px; height: 56px; }
+      .category-title { font-size: 18px; }
+      .highlight-stats, .quant-grid, .pipeline-stages { grid-template-columns: 1fr; }
+      .container, .container-wide { padding: 0 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== Sticky top navigation ===== -->
+<nav class="topnav" id="topnav">
+  <a href="#">Paper</a>
+  <a href="#abstract">Abstract</a>
+  <a href="#showcase">Showcase</a>
+  <a href="#results">Results</a>
+  <a href="#pipeline">Pipeline</a>
+  <a href="#dataset">Dataset</a>
+  <a href="#citation">BibTeX</a>
+</nav>
+
+<!-- ===== Hero ===== -->
+<header class="hero">
+  <video class="hero-bg-video" autoplay muted loop playsinline preload="auto">
+    <source src="assets/grid_10x9_pan_3x9.mp4" type="video/mp4" />
+  </video>
+  <div class="container">
+    <h1>
+      <span class="title-brand">OmniFaceRig</span>
+      <span class="title-sub">Fully Automatic Inner-Mouth-Aware Face Rigging<br>Across Diverse 3D Character Topologies</span>
+    </h1>
+    <div class="authors">
+      <span class="author-corresponding">Chao Wang<sup>*&#x2020;&#x2021;</sup></span>,
+      <span class="author-cofirst">Guangyao Ma<sup>*</sup></span>,
+      John Doublestein,
+      Junming Chen,
+      Yiming Lin,
+      Zhaoen Su,
+      Xiaomin Luo,
+      Shiyang Cheng,
+      Jie Shen,
+      Doug Roble,
+      Dilin Wang,
+      <span class="author-lead">Yilei Li<sup>&#x2020;</sup></span>,
+      <span class="author-lead">Rakesh Ranjan<sup>&#x2020;</sup></span>
+    </div>
+    <div class="affiliation">Reality Labs, Meta</div>
+    <div class="author-notes"><sup>*</sup>Equal contribution &nbsp; <sup>&#x2020;</sup>Project lead &nbsp; <sup>&#x2021;</sup>Corresponding author</div>
+    <div class="action-buttons">
+      <a class="action-btn" href="#">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h5v7h7v9H6z"/></svg>
+        Paper (Coming Soon)
+      </a>
+      <a class="action-btn" href="#">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 4.69 2 8v8c0 3.31 4.48 6 10 6s10-2.69 10-6V8c0-3.31-4.48-6-10-6zm0 2c4.42 0 8 1.79 8 4s-3.58 4-8 4-8-1.79-8-4 3.58-4 8-4zm8 12c0 2.21-3.58 4-8 4s-8-1.79-8-4v-2.23c1.88 1.33 4.79 2.23 8 2.23s6.12-.9 8-2.23V16zm0-4c0 2.21-3.58 4-8 4s-8-1.79-8-4V9.77c1.88 1.33 4.79 2.23 8 2.23s6.12-.9 8-2.23V12z"/></svg>
+        Dataset (Coming Soon)
+      </a>
+      <a class="action-btn" href="#">
+        <svg viewBox="0 0 24 24"><path d="M9.4 16.6 4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0 4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
+        Code (Coming Soon)
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ===== Video (first content section, no labels) ===== -->
+<section id="video">
+  <div class="container">
+    <div class="video-frame">
+      <video id="demoVideo" controls loop playsinline preload="metadata" poster="assets/title_card_p30.png">
+        <source src="assets/demo_final_v2.mp4" type="video/mp4" />
+        Your browser does not support embedded video.
+      </video>
+      <div class="video-poster" id="videoPoster">
+        <button class="poster-play" aria-label="Play video"></button>
+      </div>
+    </div>
+    <div class="teaser">
+      <img src="assets/cover_image.png" alt="OmniFaceRig teaser (Figure 1)" loading="lazy">
+      <p class="teaser-caption"><strong>OmniFaceRig</strong> turns a static, surface-only 3D character &mdash; with no pre-modeled mouth interior &mdash; into an animation-ready, inner-mouth-aware FACS rig with procedurally fitted teeth, gums, and tongue. One automatic pipeline handles humans, humanoids, and both long- and short-muzzled animals, with no manual landmarks, no user templates, and no per-asset setup.</p>
+    </div>
+  </div>
+</section>
+
+<script>
+  (function () {
+    const video = document.getElementById('demoVideo');
+    const poster = document.getElementById('videoPoster');
+    function startPlayback() {
+      poster.classList.add('hidden');
+      video.play().catch(() => {});
+    }
+    poster.addEventListener('click', startPlayback);
+    video.addEventListener('play', () => poster.classList.add('hidden'));
+  })();
+</script>
+
+<!-- ===== Abstract ===== -->
+<section id="abstract">
+  <div class="container">
+    <div class="section-label">Abstract</div>
+    <div class="abstract">
+      <p>Facial rigging—creating FACS-based blendshapes together with inner-mouth geometry (teeth, gums, and tongue)—remains a major bottleneck in 3D character production. Existing pipelines still require substantial designer effort, especially for manual landmark annotation, per-character template adjustment, and inner-mouth placement.</p>
+      <p>We present <strong>OmniFaceRig</strong>, a fully automatic end-to-end pipeline that converts a static surface-only 3D character mesh, with no pre-modeled oral cavity, into an inner-mouth-aware FACS rig with up to 155 blendshapes, procedurally fitted teeth, gums, and tongue, and re-packed UV/texture. OmniFaceRig supports diverse topologies—humans, humanoids, long-muzzled animals (e.g., dogs, wolves, foxes), and short-muzzled animals (e.g., cats, bears, rabbits, tigers)—with no manual landmarks, no user-provided templates, and no per-asset setup.</p>
+      <p>The pipeline combines hybrid VLM+CV riggability checking, multi-model face parsing, dense keypoint-driven template registration, procedural inner-mouth construction, and collision-aware blendshape transfer. For non-human characters, OmniFaceRig selects topology-specific face and inner-mouth templates and uses collision-aware inner-mouth fitting to reduce teeth-face intersections without exposing users to category-specific tuning.</p>
+      <p>We also publicly release <strong>Omni-Bench</strong>, a freely available benchmark dataset of 1,000 biped 3D characters with FACS facial blendshapes and inner-mouth geometry, spanning humans, humanoids, cats, dogs, and other animals. Experiments show high final rigging success on screened Omni-Bench inputs, nearly complete face detection recall from the segmentation ensemble, reliable inner-mouth placement with low penetration, and 20–30&nbsp;s end-to-end processing time per asset on a single A100 GPU, including data I/O. Together, OmniFaceRig provides an automatic path from static generated characters to animation-ready facial rigs across both human and non-human topologies.</p>
+    </div>
+    <div class="highlight-stats">
+      <div class="hl"><div class="hl-num">155</div><div class="hl-desc">FACS blendshapes per rig, including procedurally generated teeth, gums &amp; tongue</div></div>
+      <div class="hl"><div class="hl-num">1,000</div><div class="hl-desc">rigged biped characters released in the open Omni-Bench benchmark</div></div>
+      <div class="hl"><div class="hl-num">20&ndash;30s</div><div class="hl-desc">end-to-end per asset on a single A100 GPU, including data I/O</div></div>
+      <div class="hl"><div class="hl-num">4</div><div class="hl-desc">topology categories: human, humanoid, long- &amp; short-muzzled animals</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Showcase (inline 3D GLB renderer) ===== -->
+<section id="showcase">
+  <div class="container">
+    <div class="section-label">Showcase</div>
+    <h2 class="section-h2">Explore rigged characters in 3D</h2>
+    <p class="showcase-note">
+      Each card below shows <strong>three columns</strong>: the input body image, the
+      original surface-only GLB, and the rigged GLB with FACS animation. Click the
+      <strong>&#x25B6;&nbsp;Load</strong> button on a card to activate both 3D viewers at once.
+      Inside each viewer, drag the splitter to toggle <strong>texture</strong> (left half)
+      vs. <strong>solid grey</strong> (right half); camera and split position are shared
+      across both viewers (left-drag rotate, scroll zoom, shift+drag pan). After 2.5&nbsp;s
+      of idle time the model slowly auto-rotates.
+    </p>
+  </div>
+  <div class="container-wide">
+    <div class="showcase">
+
+      <!-- ── Human (12 assets) ── -->
+      <div class="showcase-category" data-category="human">
+        <div class="category-header">
+          <h3 class="category-title">Human</h3>
+          <span class="category-count">12 assets</span>
+        </div>
+        <div class="category-viewer">
+          <div class="asset-block active" data-stem="older_surfer_dude_cleaned_rig" data-orig="older_surfer_dude_cleaned" data-tag="Human" data-color="#ffd76b">
+            <div class="col-image">
+              <img src="dataset_viewer/older_surfer_dude_cleaned_body.png" alt="older_surfer_dude_cleaned" loading="lazy">
+              <div class="col-tag" style="background-color:#ffd76b">Human</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="100_rig" data-orig="100" data-tag="Human" data-color="#ffd76b">
+            <div class="col-image">
+              <img src="dataset_viewer/100_body.png" alt="100" loading="lazy">
+              <div class="col-tag" style="background-color:#ffd76b">Human</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="253_rig" data-orig="253" data-tag="Human" data-color="#ffd76b">
+            <div class="col-image">
+              <img src="dataset_viewer/253_body.png" alt="253" loading="lazy">
+              <div class="col-tag" style="background-color:#ffd76b">Human</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="013_cleaned_rig" data-orig="013_cleaned" data-tag="Human" data-color="#ffd76b">
+            <div class="col-image">
+              <img src="dataset_viewer/013_cleaned_body.png" alt="013_cleaned" loading="lazy">
+              <div class="col-tag" style="background-color:#ffd76b">Human</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="007_rig" data-orig="007" data-tag="Human" data-color="#ffd76b">
+            <div class="col-image">
+              <img src="dataset_viewer/007_body.png" alt="007" loading="lazy">
+              <div class="col-tag" style="background-color:#ffd76b">Human</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="010_rig" data-orig="010" data-tag="Human" data-color="#ffd76b">
+            <div class="col-image">
+              <img src="dataset_viewer/010_body.png" alt="010" loading="lazy">
+              <div class="col-tag" style="background-color:#ffd76b">Human</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="019_rig" data-orig="019" data-tag="Human" data-color="#ffd76b">
+            <div class="col-image">
+              <img src="dataset_viewer/019_body.png" alt="019" loading="lazy">
+              <div class="col-tag" style="background-color:#ffd76b">Human</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="045_rig" data-orig="045" data-tag="Human" data-color="#ffd76b">
+            <div class="col-image">
+              <img src="dataset_viewer/045_body.png" alt="045" loading="lazy">
+              <div class="col-tag" style="background-color:#ffd76b">Human</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="079_rig" data-orig="079" data-tag="Human" data-color="#ffd76b">
+            <div class="col-image">
+              <img src="dataset_viewer/079_body.png" alt="079" loading="lazy">
+              <div class="col-tag" style="background-color:#ffd76b">Human</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="074_rig" data-orig="074" data-tag="Human" data-color="#ffd76b">
+            <div class="col-image">
+              <img src="dataset_viewer/074_body.png" alt="074" loading="lazy">
+              <div class="col-tag" style="background-color:#ffd76b">Human</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="075_rig" data-orig="075" data-tag="Human" data-color="#ffd76b">
+            <div class="col-image">
+              <img src="dataset_viewer/075_body.png" alt="075" loading="lazy">
+              <div class="col-tag" style="background-color:#ffd76b">Human</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="076_rig" data-orig="076" data-tag="Human" data-color="#ffd76b">
+            <div class="col-image">
+              <img src="dataset_viewer/076_body.png" alt="076" loading="lazy">
+              <div class="col-tag" style="background-color:#ffd76b">Human</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+        </div>
+        <div class="category-thumbs">
+          <div class="thumb active" data-stem="older_surfer_dude_cleaned_rig">
+            <img src="dataset_viewer/older_surfer_dude_cleaned_body.png" alt="older_surfer_dude_cleaned">
+          </div>
+          <div class="thumb" data-stem="100_rig">
+            <img src="dataset_viewer/100_body.png" alt="100">
+          </div>
+          <div class="thumb" data-stem="253_rig">
+            <img src="dataset_viewer/253_body.png" alt="253">
+          </div>
+          <div class="thumb" data-stem="013_cleaned_rig">
+            <img src="dataset_viewer/013_cleaned_body.png" alt="013_cleaned">
+          </div>
+          <div class="thumb" data-stem="007_rig">
+            <img src="dataset_viewer/007_body.png" alt="007">
+          </div>
+          <div class="thumb" data-stem="010_rig">
+            <img src="dataset_viewer/010_body.png" alt="010">
+          </div>
+          <div class="thumb" data-stem="019_rig">
+            <img src="dataset_viewer/019_body.png" alt="019">
+          </div>
+          <div class="thumb" data-stem="045_rig">
+            <img src="dataset_viewer/045_body.png" alt="045">
+          </div>
+          <div class="thumb" data-stem="079_rig">
+            <img src="dataset_viewer/079_body.png" alt="079">
+          </div>
+          <div class="thumb" data-stem="074_rig">
+            <img src="dataset_viewer/074_body.png" alt="074">
+          </div>
+          <div class="thumb" data-stem="075_rig">
+            <img src="dataset_viewer/075_body.png" alt="075">
+          </div>
+          <div class="thumb" data-stem="076_rig">
+            <img src="dataset_viewer/076_body.png" alt="076">
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Humanoid (12 assets) ── -->
+      <div class="showcase-category" data-category="humanoid">
+        <div class="category-header">
+          <h3 class="category-title">Humanoid</h3>
+          <span class="category-count">12 assets</span>
+        </div>
+        <div class="category-viewer">
+          <div class="asset-block active" data-stem="moss_covered_dryad_android_rig" data-orig="moss_covered_dryad_android" data-tag="Humanoid" data-color="#a3e0c0">
+            <div class="col-image">
+              <img src="dataset_viewer/moss_covered_dryad_android_body.png" alt="moss_covered_dryad_android" loading="lazy">
+              <div class="col-tag" style="background-color:#a3e0c0">Humanoid</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="009_rig" data-orig="009" data-tag="Humanoid" data-color="#a3e0c0">
+            <div class="col-image">
+              <img src="dataset_viewer/009_body.png" alt="009" loading="lazy">
+              <div class="col-tag" style="background-color:#a3e0c0">Humanoid</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="137_rig" data-orig="137" data-tag="Humanoid" data-color="#a3e0c0">
+            <div class="col-image">
+              <img src="dataset_viewer/137_body.png" alt="137" loading="lazy">
+              <div class="col-tag" style="background-color:#a3e0c0">Humanoid</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="202_rig" data-orig="202" data-tag="Humanoid" data-color="#a3e0c0">
+            <div class="col-image">
+              <img src="dataset_viewer/202_body.png" alt="202" loading="lazy">
+              <div class="col-tag" style="background-color:#a3e0c0">Humanoid</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="008_rig" data-orig="008" data-tag="Humanoid" data-color="#a3e0c0">
+            <div class="col-image">
+              <img src="dataset_viewer/008_body.png" alt="008" loading="lazy">
+              <div class="col-tag" style="background-color:#a3e0c0">Humanoid</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="015_rig" data-orig="015" data-tag="Humanoid" data-color="#a3e0c0">
+            <div class="col-image">
+              <img src="dataset_viewer/015_body.png" alt="015" loading="lazy">
+              <div class="col-tag" style="background-color:#a3e0c0">Humanoid</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="017_rig" data-orig="017" data-tag="Humanoid" data-color="#a3e0c0">
+            <div class="col-image">
+              <img src="dataset_viewer/017_body.png" alt="017" loading="lazy">
+              <div class="col-tag" style="background-color:#a3e0c0">Humanoid</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="160_rig" data-orig="160" data-tag="Humanoid" data-color="#a3e0c0">
+            <div class="col-image">
+              <img src="dataset_viewer/160_body.png" alt="160" loading="lazy">
+              <div class="col-tag" style="background-color:#a3e0c0">Humanoid</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="200_rig" data-orig="200" data-tag="Humanoid" data-color="#a3e0c0">
+            <div class="col-image">
+              <img src="dataset_viewer/200_body.png" alt="200" loading="lazy">
+              <div class="col-tag" style="background-color:#a3e0c0">Humanoid</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="204_rig" data-orig="204" data-tag="Humanoid" data-color="#a3e0c0">
+            <div class="col-image">
+              <img src="dataset_viewer/204_body.png" alt="204" loading="lazy">
+              <div class="col-tag" style="background-color:#a3e0c0">Humanoid</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="205_rig" data-orig="205" data-tag="Humanoid" data-color="#a3e0c0">
+            <div class="col-image">
+              <img src="dataset_viewer/205_body.png" alt="205" loading="lazy">
+              <div class="col-tag" style="background-color:#a3e0c0">Humanoid</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="213_rig" data-orig="213" data-tag="Humanoid" data-color="#a3e0c0">
+            <div class="col-image">
+              <img src="dataset_viewer/213_body.png" alt="213" loading="lazy">
+              <div class="col-tag" style="background-color:#a3e0c0">Humanoid</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+        </div>
+        <div class="category-thumbs">
+          <div class="thumb active" data-stem="moss_covered_dryad_android_rig">
+            <img src="dataset_viewer/moss_covered_dryad_android_body.png" alt="moss_covered_dryad_android">
+          </div>
+          <div class="thumb" data-stem="009_rig">
+            <img src="dataset_viewer/009_body.png" alt="009">
+          </div>
+          <div class="thumb" data-stem="137_rig">
+            <img src="dataset_viewer/137_body.png" alt="137">
+          </div>
+          <div class="thumb" data-stem="202_rig">
+            <img src="dataset_viewer/202_body.png" alt="202">
+          </div>
+          <div class="thumb" data-stem="008_rig">
+            <img src="dataset_viewer/008_body.png" alt="008">
+          </div>
+          <div class="thumb" data-stem="015_rig">
+            <img src="dataset_viewer/015_body.png" alt="015">
+          </div>
+          <div class="thumb" data-stem="017_rig">
+            <img src="dataset_viewer/017_body.png" alt="017">
+          </div>
+          <div class="thumb" data-stem="160_rig">
+            <img src="dataset_viewer/160_body.png" alt="160">
+          </div>
+          <div class="thumb" data-stem="200_rig">
+            <img src="dataset_viewer/200_body.png" alt="200">
+          </div>
+          <div class="thumb" data-stem="204_rig">
+            <img src="dataset_viewer/204_body.png" alt="204">
+          </div>
+          <div class="thumb" data-stem="205_rig">
+            <img src="dataset_viewer/205_body.png" alt="205">
+          </div>
+          <div class="thumb" data-stem="213_rig">
+            <img src="dataset_viewer/213_body.png" alt="213">
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Long-muzzled (13 assets) ── -->
+      <div class="showcase-category" data-category="long-muzzled">
+        <div class="category-header">
+          <h3 class="category-title">Long-muzzled</h3>
+          <span class="category-count">13 assets</span>
+        </div>
+        <div class="category-viewer">
+          <div class="asset-block active" data-stem="196_rig" data-orig="196" data-tag="Long-muzzled" data-color="#87ceeb">
+            <div class="col-image">
+              <img src="dataset_viewer/196_body.png" alt="196" loading="lazy">
+              <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="180_rig" data-orig="180" data-tag="Long-muzzled" data-color="#87ceeb">
+            <div class="col-image">
+              <img src="dataset_viewer/180_body.png" alt="180" loading="lazy">
+              <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="185_rig" data-orig="185" data-tag="Long-muzzled" data-color="#87ceeb">
+            <div class="col-image">
+              <img src="dataset_viewer/185_body.png" alt="185" loading="lazy">
+              <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="111_dog_rig" data-orig="111_dog" data-tag="Long-muzzled" data-color="#87ceeb">
+            <div class="col-image">
+              <img src="dataset_viewer/111_dog_body.png" alt="111_dog" loading="lazy">
+              <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="000_dog_rig" data-orig="000_dog" data-tag="Long-muzzled" data-color="#87ceeb">
+            <div class="col-image">
+              <img src="dataset_viewer/000_dog_body.png" alt="000_dog" loading="lazy">
+              <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="057_dog_rig" data-orig="057_dog" data-tag="Long-muzzled" data-color="#87ceeb">
+            <div class="col-image">
+              <img src="dataset_viewer/057_dog_body.png" alt="057_dog" loading="lazy">
+              <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="065_rig" data-orig="065" data-tag="Long-muzzled" data-color="#87ceeb">
+            <div class="col-image">
+              <img src="dataset_viewer/065_body.png" alt="065" loading="lazy">
+              <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="059_rig" data-orig="059" data-tag="Long-muzzled" data-color="#87ceeb">
+            <div class="col-image">
+              <img src="dataset_viewer/059_body.png" alt="059" loading="lazy">
+              <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="063_rig" data-orig="063" data-tag="Long-muzzled" data-color="#87ceeb">
+            <div class="col-image">
+              <img src="dataset_viewer/063_body.png" alt="063" loading="lazy">
+              <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="179_rig" data-orig="179" data-tag="Long-muzzled" data-color="#87ceeb">
+            <div class="col-image">
+              <img src="dataset_viewer/179_body.png" alt="179" loading="lazy">
+              <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="262_rig" data-orig="262" data-tag="Long-muzzled" data-color="#87ceeb">
+            <div class="col-image">
+              <img src="dataset_viewer/262_body.png" alt="262" loading="lazy">
+              <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="279_rig" data-orig="279" data-tag="Long-muzzled" data-color="#87ceeb">
+            <div class="col-image">
+              <img src="dataset_viewer/279_body.png" alt="279" loading="lazy">
+              <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="267_rig" data-orig="267" data-tag="Long-muzzled" data-color="#87ceeb">
+            <div class="col-image">
+              <img src="dataset_viewer/267_body.png" alt="267" loading="lazy">
+              <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+        </div>
+        <div class="category-thumbs">
+          <div class="thumb active" data-stem="196_rig">
+            <img src="dataset_viewer/196_body.png" alt="196">
+          </div>
+          <div class="thumb" data-stem="180_rig">
+            <img src="dataset_viewer/180_body.png" alt="180">
+          </div>
+          <div class="thumb" data-stem="185_rig">
+            <img src="dataset_viewer/185_body.png" alt="185">
+          </div>
+          <div class="thumb" data-stem="111_dog_rig">
+            <img src="dataset_viewer/111_dog_body.png" alt="111_dog">
+          </div>
+          <div class="thumb" data-stem="000_dog_rig">
+            <img src="dataset_viewer/000_dog_body.png" alt="000_dog">
+          </div>
+          <div class="thumb" data-stem="057_dog_rig">
+            <img src="dataset_viewer/057_dog_body.png" alt="057_dog">
+          </div>
+          <div class="thumb" data-stem="065_rig">
+            <img src="dataset_viewer/065_body.png" alt="065">
+          </div>
+          <div class="thumb" data-stem="059_rig">
+            <img src="dataset_viewer/059_body.png" alt="059">
+          </div>
+          <div class="thumb" data-stem="063_rig">
+            <img src="dataset_viewer/063_body.png" alt="063">
+          </div>
+          <div class="thumb" data-stem="179_rig">
+            <img src="dataset_viewer/179_body.png" alt="179">
+          </div>
+          <div class="thumb" data-stem="262_rig">
+            <img src="dataset_viewer/262_body.png" alt="262">
+          </div>
+          <div class="thumb" data-stem="279_rig">
+            <img src="dataset_viewer/279_body.png" alt="279">
+          </div>
+          <div class="thumb" data-stem="267_rig">
+            <img src="dataset_viewer/267_body.png" alt="267">
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Short-muzzled (13 assets) ── -->
+      <div class="showcase-category" data-category="short-muzzled">
+        <div class="category-header">
+          <h3 class="category-title">Short-muzzled</h3>
+          <span class="category-count">13 assets</span>
+        </div>
+        <div class="category-viewer">
+          <div class="asset-block active" data-stem="bear_01_rig" data-orig="bear_01" data-tag="Short-muzzled" data-color="#ff9c6b">
+            <div class="col-image">
+              <img src="dataset_viewer/bear_01_body.png" alt="bear_01" loading="lazy">
+              <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="053_rig" data-orig="053" data-tag="Short-muzzled" data-color="#ff9c6b">
+            <div class="col-image">
+              <img src="dataset_viewer/053_body.png" alt="053" loading="lazy">
+              <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="264_rig" data-orig="264" data-tag="Short-muzzled" data-color="#ff9c6b">
+            <div class="col-image">
+              <img src="dataset_viewer/264_body.png" alt="264" loading="lazy">
+              <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="190_rig" data-orig="190" data-tag="Short-muzzled" data-color="#ff9c6b">
+            <div class="col-image">
+              <img src="dataset_viewer/190_body.png" alt="190" loading="lazy">
+              <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="099_rig" data-orig="099" data-tag="Short-muzzled" data-color="#ff9c6b">
+            <div class="col-image">
+              <img src="dataset_viewer/099_body.png" alt="099" loading="lazy">
+              <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="122_cat_rig" data-orig="122_cat" data-tag="Short-muzzled" data-color="#ff9c6b">
+            <div class="col-image">
+              <img src="dataset_viewer/122_cat_body.png" alt="122_cat" loading="lazy">
+              <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="159_cat_rig" data-orig="159_cat" data-tag="Short-muzzled" data-color="#ff9c6b">
+            <div class="col-image">
+              <img src="dataset_viewer/159_cat_body.png" alt="159_cat" loading="lazy">
+              <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="193_cat_rig" data-orig="193_cat" data-tag="Short-muzzled" data-color="#ff9c6b">
+            <div class="col-image">
+              <img src="dataset_viewer/193_cat_body.png" alt="193_cat" loading="lazy">
+              <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="136_rig" data-orig="136" data-tag="Short-muzzled" data-color="#ff9c6b">
+            <div class="col-image">
+              <img src="dataset_viewer/136_body.png" alt="136" loading="lazy">
+              <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="061_rig" data-orig="061" data-tag="Short-muzzled" data-color="#ff9c6b">
+            <div class="col-image">
+              <img src="dataset_viewer/061_body.png" alt="061" loading="lazy">
+              <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="161_rig" data-orig="161" data-tag="Short-muzzled" data-color="#ff9c6b">
+            <div class="col-image">
+              <img src="dataset_viewer/161_body.png" alt="161" loading="lazy">
+              <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="176_rig" data-orig="176" data-tag="Short-muzzled" data-color="#ff9c6b">
+            <div class="col-image">
+              <img src="dataset_viewer/176_body.png" alt="176" loading="lazy">
+              <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+          <div class="asset-block" data-stem="272_rig" data-orig="272" data-tag="Short-muzzled" data-color="#ff9c6b">
+            <div class="col-image">
+              <img src="dataset_viewer/272_body.png" alt="272" loading="lazy">
+              <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
+              <div class="col-label">Foreboard Image</div>
+            </div>
+            <div class="col-viewer" data-role="original">
+              <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
+              <div class="col-label">Original Asset</div>
+            </div>
+            <div class="col-viewer" data-role="rig">
+              <div class="placeholder"></div>
+              <div class="col-label">Rigged + FACS</div>
+            </div>
+          </div>
+        </div>
+        <div class="category-thumbs">
+          <div class="thumb active" data-stem="bear_01_rig">
+            <img src="dataset_viewer/bear_01_body.png" alt="bear_01">
+          </div>
+          <div class="thumb" data-stem="053_rig">
+            <img src="dataset_viewer/053_body.png" alt="053">
+          </div>
+          <div class="thumb" data-stem="264_rig">
+            <img src="dataset_viewer/264_body.png" alt="264">
+          </div>
+          <div class="thumb" data-stem="190_rig">
+            <img src="dataset_viewer/190_body.png" alt="190">
+          </div>
+          <div class="thumb" data-stem="099_rig">
+            <img src="dataset_viewer/099_body.png" alt="099">
+          </div>
+          <div class="thumb" data-stem="122_cat_rig">
+            <img src="dataset_viewer/122_cat_body.png" alt="122_cat">
+          </div>
+          <div class="thumb" data-stem="159_cat_rig">
+            <img src="dataset_viewer/159_cat_body.png" alt="159_cat">
+          </div>
+          <div class="thumb" data-stem="193_cat_rig">
+            <img src="dataset_viewer/193_cat_body.png" alt="193_cat">
+          </div>
+          <div class="thumb" data-stem="136_rig">
+            <img src="dataset_viewer/136_body.png" alt="136">
+          </div>
+          <div class="thumb" data-stem="061_rig">
+            <img src="dataset_viewer/061_body.png" alt="061">
+          </div>
+          <div class="thumb" data-stem="161_rig">
+            <img src="dataset_viewer/161_body.png" alt="161">
+          </div>
+          <div class="thumb" data-stem="176_rig">
+            <img src="dataset_viewer/176_body.png" alt="176">
+          </div>
+          <div class="thumb" data-stem="272_rig">
+            <img src="dataset_viewer/272_body.png" alt="272">
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div id="showcase-modal">
+      <div class="modal-slot">
+        <button class="modal-close" type="button" aria-label="Close">&times;</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Results Carousel ===== -->
+<section id="results">
+  <div class="container">
+    <div class="section-label">Results</div>
+    <h2 class="section-h2">Qualitative results across diverse topologies</h2>
+    <div class="carousel">
+      <div class="carousel-track">
+        <div class="carousel-slides" id="carouselSlides">
+          <div class="carousel-slide">
+            <img src="assets/main_result.png" alt="Main qualitative result: 7 characters across 6 FACS expressions" />
+            <div class="caption">Main qualitative result — each row is one input asset; the leftmost column shows the input static surface-only mesh, the remaining columns are generated FACS expressions.</div>
+          </div>
+          <div class="carousel-slide">
+            <img src="assets/sup_result_01.png" alt="Additional qualitative result 1" />
+            <div class="caption">Additional qualitative result #1.</div>
+          </div>
+          <div class="carousel-slide">
+            <img src="assets/sup_result_02.png" alt="Additional qualitative result 2" />
+            <div class="caption">Additional qualitative result #2.</div>
+          </div>
+          <div class="carousel-slide">
+            <img src="assets/sup_result_03.png" alt="Additional qualitative result 3" />
+            <div class="caption">Additional qualitative result #3.</div>
+          </div>
+          <div class="carousel-slide">
+            <img src="assets/sup_result_04.png" alt="Additional qualitative result 4" />
+            <div class="caption">Additional qualitative result #4.</div>
+          </div>
+          <div class="carousel-slide">
+            <img src="assets/sup_result_05.png" alt="Additional qualitative result 5" />
+            <div class="caption">Additional qualitative result #5.</div>
+          </div>
+          <div class="carousel-slide">
+            <img src="assets/sup_result_06.png" alt="Additional qualitative result 6" />
+            <div class="caption">Additional qualitative result #6.</div>
+          </div>
+          <div class="carousel-slide">
+            <img src="assets/failure_case.png" alt="Failure cases: bird, fish-like, insect, seahorse-like" />
+            <div class="caption">Failure cases — characters whose facial topology falls outside our current template families (bird with a sharp beak, fish-like flat snout, insect with oversized compound eyes, seahorse-like elongated snout).</div>
+          </div>
+        </div>
+      </div>
+      <button class="carousel-arrow prev" id="prevBtn" aria-label="Previous result">&#x2039;</button>
+      <button class="carousel-arrow next" id="nextBtn" aria-label="Next result">&#x203A;</button>
+      <div class="carousel-dots" id="carouselDots"></div>
+      <div class="carousel-counter" id="carouselCounter">1 / 8</div>
+    </div>
+    <div class="quant-grid">
+      <div class="quant-card"><div class="quant-num">99.0%</div><div class="quant-label">Final rigging success (human + humanoid)</div></div>
+      <div class="quant-card"><div class="quant-num">0.85&nbsp;mm</div><div class="quant-label">Mean vertex error (MAE)</div></div>
+      <div class="quant-card"><div class="quant-num">0.05%</div><div class="quant-label">Inner-mouth penetration (3.4&times; better)</div></div>
+      <div class="quant-card"><div class="quant-num">~100%</div><div class="quant-label">Face detection recall (ensemble)</div></div>
+      <div class="quant-card"><div class="quant-num">87.3%</div><div class="quant-label">Segmentation mIoU (vs 62.1%)</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Pipeline ===== -->
+<section id="pipeline">
+  <div class="container">
+    <div class="section-label">Pipeline</div>
+    <h2 class="section-h2">Two-stage architecture</h2>
+    <div class="pipeline-image">
+      <img src="assets/pipeline.png" alt="OmniFaceRig pipeline architecture" />
+    </div>
+    <div class="pipeline-stages">
+      <div class="stage-card">
+        <h3>Stage 1 &middot; Face Template Fitting</h3>
+        <p>Riggability assessment, multi-model face detection &amp; segmentation, landmark extraction, and rigid + non-rigid template registration produce a fitted face mesh.</p>
+      </div>
+      <div class="stage-card">
+        <h3>Stage 2 &middot; Blendshape Rig Construction</h3>
+        <p>Face mesh fusion, teeth registration &amp; texture baking, and FACS blendshape transfer produce the final inner-mouth-aware FACS rig.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Omni-Bench Dataset ===== -->
+<section id="dataset">
+  <div class="container">
+    <div class="section-label">Omni-Bench Dataset</div>
+    <h2 class="section-h2">A new benchmark for face auto-rigging</h2>
+  </div>
+  <div class="container-wide">
+    <div class="dataset-figure">
+      <img src="assets/omnibench_dataset.png" alt="Omni-Bench dataset overview: diverse rigged 3D characters spanning humans, humanoids, cats, dogs, and other animals." />
+      <div class="caption">Omni-Bench overview — 1,000 biped 3D characters with FACS facial blendshapes and inner-mouth geometry, spanning realistic humans, humanoid characters, cats, dogs, and a long tail of other common animals.</div>
+    </div>
+
+    <div class="dataset-text">
+      <p>To facilitate future research in automatic facial rigging, we release <strong>Omni-Bench</strong>, to our knowledge the first open-source benchmark of biped 3D characters with FACS facial blendshapes and inner-mouth geometry (teeth, gums, and tongue). Omni-Bench contains <strong>1,000 rigged biped 3D characters</strong>, split into 500 human and humanoid characters and 500 animals (150 cats across 10 breeds, 150 dogs across 10 breeds, and 200 other common animals including bears, tigers, lions, foxes, wolves, rabbits, and deer). All assets are released in T-pose with up to 12 appearance variations and full generation-pipeline metadata (text prompt, intermediate 2D reference image, final 3D mesh).</p>
+      <p>Omni-Bench stands out in three critical ways. First, it uniquely supports both human and animal characters within a unified rigging framework. Second, every model is equipped with a complete set of auto-generated FACS blendshapes (up to 155 shapes) that explicitly include teeth, gums, and tongue — a feature absent in nearly all existing large-scale datasets. Third, each asset includes the complete generation pipeline data (text + reference image + 3D mesh), making it a valuable resource for text-to-3D generation and multimodal research.</p>
+    </div>
+
+    <div class="dataset-table-title">
+      Comparison with existing 3D facial / character datasets — Omni-Bench is the <strong>only</strong> dataset providing FACS blendshapes with inner-mouth geometry for both humans and animals.
+    </div>
+    <div class="dataset-table-wrap">
+      <table class="dataset-table">
+        <thead>
+          <tr>
+            <th style="text-align:left;">Dataset</th>
+            <th>Year</th>
+            <th>Total Models</th>
+            <th>Species</th>
+            <th>FACS Blendshapes</th>
+            <th>Inner Mouth</th>
+            <th>Full Character</th>
+            <th>Text + 2D Image</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>BFM</td><td class="num">2009</td><td class="num">200</td><td>Human</td>
+            <td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td>
+          </tr>
+          <tr>
+            <td>CoMA</td><td class="num">2018</td><td class="num">144</td><td>Human</td>
+            <td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td>
+          </tr>
+          <tr>
+            <td>VOCASET</td><td class="num">2019</td><td class="num">12 (4D)</td><td>Human</td>
+            <td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td>
+          </tr>
+          <tr>
+            <td>FaceScape</td><td class="num">2020</td><td class="num">16,940</td><td>Human</td>
+            <td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td>
+          </tr>
+          <tr>
+            <td>ICT FaceKit</td><td class="num">2020</td><td>Parametric</td><td>Human</td>
+            <td class="yes">&#x2713;</td><td class="yes">&#x2713;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td>
+          </tr>
+          <tr>
+            <td>Multiface</td><td class="num">2022</td><td class="num">13</td><td>Human</td>
+            <td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td>
+          </tr>
+          <tr>
+            <td>RaBit</td><td class="num">2023</td><td class="num">1,500</td><td>Human &amp; Cartoon</td>
+            <td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="yes">&#x2713;</td><td class="no">&#x2717;</td>
+          </tr>
+          <tr>
+            <td>Anymate</td><td class="num">2025</td><td class="num">230,000</td><td>Human &amp; Animal</td>
+            <td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="yes">&#x2713;</td><td class="no">&#x2717;</td>
+          </tr>
+          <tr class="ours">
+            <td>Omni-Bench (Ours)</td><td class="num">2026</td><td class="num">1,000</td><td>Human &amp; Animal</td>
+            <td class="yes">&#x2713;</td><td class="yes">&#x2713;</td><td class="yes">&#x2713;</td><td class="yes">&#x2713;</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Citation ===== -->
+<section id="citation">
+  <div class="container">
+    <div class="section-label">BibTeX</div>
+    <p class="citation-prompt">If you find this work useful, please cite our paper.</p>
+    <div class="citation-block">
+      <button class="citation-copy" onclick="navigator.clipboard.writeText(document.querySelector('.citation-block pre').textContent).then(()=>{this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)})">Copy</button>
+<pre>@article{wang2026omnifacerig,
+  title={OmniFaceRig: Fully Automatic Inner-Mouth-Aware Face Rigging Across Diverse 3D Character Topologies},
+  author={Wang, Chao and Ma, Guangyao and Doublestein, John and Chen, Junming and Lin, Yiming and Su, Zhaoen and Luo, Xiaomin and Cheng, Shiyang and Shen, Jie and Roble, Doug and Wang, Dilin and Li, Yilei and Ranjan, Rakesh},
+  journal={arXiv preprint},
+  year={2026}
+}</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Footer ===== -->
+<footer>
+  <div class="container">
+    <p>OmniFaceRig &middot; Reality Labs, Meta</p>
+  </div>
+</footer>
+
+<script>
+  // ===== Carousel ===== //
+  (function () {
+    const slides = document.getElementById('carouselSlides');
+    const dotsContainer = document.getElementById('carouselDots');
+    const counter = document.getElementById('carouselCounter');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const slideCount = slides.children.length;
+    let current = 0;
+
+    for (let i = 0; i < slideCount; i++) {
+      const dot = document.createElement('button');
+      dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+      dot.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+      dot.addEventListener('click', () => goTo(i));
+      dotsContainer.appendChild(dot);
+    }
+
+    function goTo(index) {
+      current = (index + slideCount) % slideCount;
+      slides.style.transform = `translateX(-${current * 100}%)`;
+      document.querySelectorAll('.carousel-dot').forEach((d, i) => {
+        d.classList.toggle('active', i === current);
+      });
+      counter.textContent = (current + 1) + ' / ' + slideCount;
+    }
+
+    prevBtn.addEventListener('click', () => goTo(current - 1));
+    nextBtn.addEventListener('click', () => goTo(current + 1));
+
+    document.addEventListener('keydown', (e) => {
+      if (document.getElementById('showcase-modal').classList.contains('open')) return;
+      if (e.key === 'ArrowLeft') goTo(current - 1);
+      if (e.key === 'ArrowRight') goTo(current + 1);
+    });
+
+    let touchStartX = null;
+    slides.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    });
+    slides.addEventListener('touchend', (e) => {
+      if (touchStartX === null) return;
+      const dx = e.changedTouches[0].screenX - touchStartX;
+      if (Math.abs(dx) > 50) {
+        if (dx > 0) goTo(current - 1); else goTo(current + 1);
+      }
+      touchStartX = null;
+    });
+  })();
+</script>
+
+<script type="module">
+  // ===== Three.js GLB Showcase controller (real lighting + shadows) ===== //
+  // Replaces the model-viewer build. Each cell is a single <canvas> with its
+  // own Three.js scene: a directional "sun" casting a real shadow onto a large
+  // (200×200) invisible ShadowMaterial plane — so the shadow never clips or
+  // peeks when orbiting (unlike model-viewer's foot-sized shadow catcher).
+  // Texture-vs-solid split is a scissor pass (left textured, right solid grey).
+  import * as THREE from 'three';
+  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+  import { MeshoptDecoder } from './libs/meshopt_decoder.module.js';
+  import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+  const CDN = "./dataset_viewer";
+  const BG_COLOR = 0xf0f2f5;     // viewer background (matches light theme panels)
+  const SOLID_COLOR = 0x9a9ca3;  // grey for the "solid" half
+
+  const _loader = new GLTFLoader();
+  _loader.setMeshoptDecoder(MeshoptDecoder);  // decode EXT_meshopt_compression GLBs
+
+  // Render only viewers that are "dirty" (camera/split changed or rotating),
+  // so idle viewers cost nothing.
+  const _activeViewers = new Set();
+  function _globalTick() {
+    requestAnimationFrame(_globalTick);
+    for (const v of _activeViewers) {
+      if (!v.ready) continue;
+      if (v.mixer) { v.mixer.update(v.clock.getDelta()); v._dirty = true; }  // animated (FACS) -> render every frame
+      if (v._dirty) { if (v.render()) v._dirty = false; }
+    }
+  }
+  requestAnimationFrame(_globalTick);
+  window.addEventListener('resize', () => { for (const v of _activeViewers) v._dirty = true; });
+
+  class CellViewer {
+    constructor(canvas) {
+      this.canvas = canvas;
+      this.ready = false;
+      this._dirty = true;
+      this.splitPct = 50;
+      this.__init = null;
+      this.meshes = [];
+      this.origMats = new Map();
+      this.mixer = null;
+      this.clock = new THREE.Clock();
+
+      const r = new THREE.WebGLRenderer({ canvas, antialias: true });
+      r.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      r.outputColorSpace = THREE.SRGBColorSpace;
+      r.toneMapping = THREE.NeutralToneMapping;
+      r.toneMappingExposure = 1.0;
+      r.shadowMap.enabled = true;
+      r.shadowMap.type = THREE.PCFSoftShadowMap;
+      this.renderer = r;
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(BG_COLOR);
+      this.scene = scene;
+
+      this.camera = new THREE.PerspectiveCamera(30, 1, 0.01, 1000);
+
+      // Even, all-direction lighting like model-viewer's "neutral" env:
+      // bright on front AND back, NO directional sheen (the old look). Pure IBL.
+      const pmrem = new THREE.PMREMGenerator(r);
+      scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+      scene.environmentIntensity = 1.15;
+      pmrem.dispose();
+      // Shadow-only light: intensity 0 adds NO illumination (model stays evenly
+      // lit by IBL), but a castShadow light still renders the shadow map, so the
+      // foot shadow is real. This is how we keep "flat bright" + ground shadow.
+      const sun = new THREE.DirectionalLight(0xffffff, 0.0);
+      sun.castShadow = true;
+      sun.shadow.mapSize.set(2048, 2048);
+      sun.shadow.camera.near = 0.05;
+      sun.shadow.camera.far = 60;
+      sun.shadow.bias = -0.00005;
+      sun.shadow.normalBias = 0.04;
+      sun.shadow.radius = 3;
+      scene.add(sun); scene.add(sun.target); this.sun = sun;
+
+      // Large shadow-only plane: transparent except where the shadow falls.
+      const plane = new THREE.Mesh(
+        new THREE.PlaneGeometry(200, 200),
+        new THREE.ShadowMaterial({ opacity: 0.3 })
+      );
+      plane.rotation.x = -Math.PI / 2;
+      plane.receiveShadow = true;
+      scene.add(plane); this.shadowPlane = plane;
+
+      this.modelGroup = new THREE.Group(); scene.add(this.modelGroup);
+      this.solidMat = new THREE.MeshStandardMaterial({ color: SOLID_COLOR, roughness: 0.9, metalness: 0.0 });
+    }
+
+    load(url) {
+      return new Promise((resolve, reject) => {
+        _loader.load(url, (gltf) => {
+          const model = gltf.scene;
+          this.modelGroup.add(model);
+          model.traverse(c => {
+            if (c.isMesh) {
+              c.castShadow = true;
+              c.receiveShadow = false;
+              c.frustumCulled = false;
+              this.meshes.push(c);
+              // UNLIT material: pure texture color, identical on front AND back
+              // (no directional/IBL shading at all). toneMapped:false shows the
+              // raw albedo color. This is the flat, evenly-bright look.
+              const src = c.material;
+              const unlit = new THREE.MeshBasicMaterial({
+                map: src.map || null,
+                color: src.color ? src.color.clone() : new THREE.Color(0xffffff),
+                vertexColors: !!src.vertexColors,
+                transparent: !!src.transparent,
+                opacity: src.opacity != null ? src.opacity : 1,
+                alphaTest: src.alphaTest || 0,
+                side: src.side,
+                toneMapped: false,
+              });
+              c.material = unlit;
+              this.origMats.set(c, unlit);  // texture half = unlit pure color
+            }
+          });
+          this._fit(model);
+          // Play the rig's built-in FACS animation (morph-target track), like
+          // model-viewer's autoplay. orig GLBs have no animation -> stay static.
+          if (gltf.animations && gltf.animations.length > 0) {
+            this.mixer = new THREE.AnimationMixer(model);
+            this.mixer.clipAction(gltf.animations[0]).play();
+          }
+          this.ready = true;
+          this._dirty = true;
+          resolve(this);
+        }, undefined, reject);
+      });
+    }
+
+    _fit(model) {
+      this.modelGroup.updateMatrixWorld(true);
+      const box = new THREE.Box3().setFromObject(model);
+      const c = box.getCenter(new THREE.Vector3());
+      const s = box.getSize(new THREE.Vector3());
+      const md = Math.max(s.x, s.y, s.z) || 1;
+      const fov = this.camera.fov * Math.PI / 180;
+      let dist = md / (2 * Math.tan(fov / 2));
+      dist *= 1.25;
+      const floorY = box.min.y;
+
+      this.shadowPlane.position.set(c.x, floorY, c.z);
+
+      const sd = Math.max(md * 1.6, 1.0);
+      const sc = this.sun.shadow.camera;
+      sc.left = -sd; sc.right = sd; sc.top = sd; sc.bottom = -sd;
+      sc.updateProjectionMatrix();
+      this.sun.target.position.set(c.x, floorY, c.z);
+      this.sun.target.updateMatrixWorld();
+      this.sun.position.set(c.x + md * 1.3, floorY + md * 2.4, c.z + md * 1.1);
+
+      // initial 3/4 front view, slightly above eye level
+      this.__init = {
+        theta: Math.PI * 0.10,
+        phi: Math.PI * 0.46,
+        radius: dist,
+        tx: c.x, ty: c.y, tz: c.z,
+      };
+    }
+
+    setOrbit(theta, phi, radius, tx, ty, tz) {
+      const st = Math.sin(phi);
+      this.camera.position.set(
+        tx + radius * st * Math.sin(theta),
+        ty + radius * Math.cos(phi),
+        tz + radius * st * Math.cos(theta)
+      );
+      this.camera.lookAt(tx, ty, tz);
+      this._dirty = true;
+    }
+
+    setSplit(pct) { this.splitPct = Math.max(0, Math.min(100, pct)); this._dirty = true; }
+
+    _syncSize() {
+      const w = this.canvas.clientWidth || 0, h = this.canvas.clientHeight || 0;
+      const cur = this.renderer.getSize(new THREE.Vector2());
+      if (w && h && (cur.x !== w || cur.y !== h)) {
+        this.renderer.setSize(w, h, false);
+        this.camera.aspect = w / h;
+        this.camera.updateProjectionMatrix();
+      }
+    }
+
+    _setSolid(on) {
+      for (const m of this.meshes) m.material = on ? this.solidMat : this.origMats.get(m);
+    }
+
+    render() {
+      if (!this.ready) return false;
+      this._syncSize();
+      const w = this.canvas.clientWidth, h = this.canvas.clientHeight;
+      if (!w || !h) return false;   // hidden (display:none) — retry when visible
+      const r = this.renderer;
+      const splitX = Math.round(w * this.splitPct / 100);
+      r.setScissorTest(true);
+      r.setViewport(0, 0, w, h);
+      // left half — textured
+      this._setSolid(false);
+      r.setScissor(0, 0, splitX, h);
+      r.render(this.scene, this.camera);
+      // right half — solid grey
+      this._setSolid(true);
+      r.setScissor(splitX, 0, w - splitX, h);
+      r.render(this.scene, this.camera);
+      r.setScissorTest(false);
+      return true;
+    }
+  }
+
+  function buildViewerDom() {
+    return `<div class="compare-wrap">
+      <canvas class="cell-canvas"></canvas>
+      <div class="input-catcher"></div>
+      <div class="splitter"><div class="handle"></div></div>
+      <div class="hint hint-left">Texture</div>
+      <div class="hint hint-right">Solid</div>
+    </div>`;
+  }
+
+  // Controller: one shared orbit state across the block's two cells (orig+rig);
+  // drag rotate / shift-drag pan / wheel zoom / touch, splitter drag, and idle
+  // auto-rotate. Mirrors the model-viewer build's interaction model.
+  function makeAssetController(cells, splitters, inputs, viewers) {
+    const state = {
+      dtheta: 0, dphi: 0, scale: 1.0,
+      dtx: 0, dty: 0, dtz: 0,
+      allReady: false, splitPct: 50,
+    };
+    const MIN_SCALE = 0.5, MAX_SCALE = 4.5;
+
+    function applyCamera() {
+      if (!state.allReady) return;
+      for (const v of viewers) {
+        const i = v.__init; if (!i) continue;
+        const theta = i.theta + state.dtheta;
+        const phi = Math.max(0.05, Math.min(Math.PI - 0.05, i.phi + state.dphi));
+        const radius = i.radius * state.scale;
+        v.setOrbit(theta, phi, radius,
+          i.tx + state.dtx * i.radius,
+          i.ty + state.dty * i.radius,
+          i.tz + state.dtz * i.radius);
+      }
+    }
+
+    function applySplit() {
+      const pct = Math.max(0, Math.min(100, state.splitPct));
+      state.splitPct = pct;
+      for (const s of splitters) s.style.left = pct + '%';
+      for (const v of viewers) v.setSplit(pct);
+    }
+
+    const IDLE_MS = 2500;
+    const AUTO_THETA_PER_FRAME = 0.004;
+    let lastInputAt = performance.now();
+    function nudge() { lastInputAt = performance.now(); }
+
+    let drag = null, splitDrag = false, touch = null;
+
+    inputs.forEach((input) => {
+      input.addEventListener('mousedown', e => {
+        e.preventDefault(); nudge(); input.classList.add('dragging');
+        const wantPan = e.button === 2 || e.button === 1 || e.shiftKey;
+        drag = { x: e.clientX, y: e.clientY, mode: wantPan ? 'pan' : 'rotate' };
+      });
+      input.addEventListener('wheel', e => {
+        if (!state.allReady) return;
+        nudge(); e.preventDefault();
+        let dy = e.deltaY;
+        if (e.deltaMode === 1) dy *= 16; else if (e.deltaMode === 2) dy *= 100;
+        state.scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, state.scale * Math.exp(dy * 0.0011)));
+        applyCamera();
+      }, { passive: false });
+      input.addEventListener('contextmenu', e => e.preventDefault());
+
+      input.addEventListener('touchstart', e => {
+        nudge();
+        if (e.touches.length === 1) touch = { mode: 'rotate', x: e.touches[0].clientX, y: e.touches[0].clientY };
+        else if (e.touches.length === 2) {
+          const a = e.touches[0], b = e.touches[1];
+          touch = { mode: 'pinch', dist: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY) };
+        }
+      }, { passive: true });
+      input.addEventListener('touchmove', e => {
+        if (!touch || !state.allReady) return;
+        nudge();
+        if (touch.mode === 'rotate' && e.touches.length === 1) {
+          const dx = e.touches[0].clientX - touch.x, dy = e.touches[0].clientY - touch.y;
+          touch.x = e.touches[0].clientX; touch.y = e.touches[0].clientY;
+          state.dtheta -= dx * 0.008; state.dphi -= dy * 0.008;
+          applyCamera();
+        } else if (touch.mode === 'pinch' && e.touches.length === 2) {
+          const a = e.touches[0], b = e.touches[1];
+          const d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+          state.scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, state.scale * (touch.dist / d)));
+          touch.dist = d; applyCamera();
+        }
+      }, { passive: true });
+      input.addEventListener('touchend', () => { touch = null; });
+    });
+
+    splitters.forEach((s, i) => {
+      s.addEventListener('mousedown', e => { e.preventDefault(); e.stopPropagation(); splitDrag = { wrap: cells[i].wrap }; nudge(); });
+      s.addEventListener('touchstart', () => { splitDrag = { wrap: cells[i].wrap }; nudge(); }, { passive: true });
+    });
+
+    window.addEventListener('mousemove', e => {
+      if (splitDrag) {
+        nudge();
+        const rect = splitDrag.wrap.getBoundingClientRect();
+        state.splitPct = ((e.clientX - rect.left) / rect.width) * 100;
+        applySplit();
+        return;
+      }
+      if (!drag || !state.allReady) return;
+      nudge();
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      drag.x = e.clientX; drag.y = e.clientY;
+      if (drag.mode === 'rotate') {
+        state.dtheta -= dx * 0.008; state.dphi -= dy * 0.008;
+      } else {
+        const i0 = viewers[0].__init || { theta: 0, phi: 1.3 };
+        const theta0 = i0.theta + state.dtheta, phi0 = i0.phi + state.dphi;
+        const k = 0.0015;
+        const right = { x: Math.cos(theta0), z: -Math.sin(theta0) };
+        const up = { x: -Math.sin(theta0) * Math.cos(phi0), y: Math.sin(phi0), z: -Math.cos(theta0) * Math.cos(phi0) };
+        state.dtx -= (dx * right.x) * k - (dy * up.x) * k;
+        state.dty += dy * up.y * k;
+        state.dtz -= (dx * right.z) * k - (dy * up.z) * k;
+      }
+      applyCamera();
+    });
+    window.addEventListener('touchmove', e => {
+      if (!splitDrag || !e.touches[0]) return;
+      const rect = splitDrag.wrap.getBoundingClientRect();
+      state.splitPct = ((e.touches[0].clientX - rect.left) / rect.width) * 100;
+      applySplit();
+    }, { passive: true });
+    window.addEventListener('mouseup', () => { drag = null; splitDrag = false; inputs.forEach(i => i.classList.remove('dragging')); });
+    window.addEventListener('touchend', () => { drag = null; splitDrag = false; touch = null; });
+
+    function autoTick() {
+      if (!viewers.every(v => v.canvas.isConnected)) return;
+      if (state.allReady && !drag && !touch && !splitDrag) {
+        if (performance.now() - lastInputAt > IDLE_MS) {
+          state.dtheta -= AUTO_THETA_PER_FRAME;
+          applyCamera();
+        }
+      }
+      requestAnimationFrame(autoTick);
+    }
+    requestAnimationFrame(autoTick);
+
+    return {
+      markReady() {
+        if (viewers.every(v => v.__init)) {
+          state.allReady = true;
+          applyCamera();
+          applySplit();
+        }
+      }
+    };
+  }
+
+  function activateAsset(block) {
+    const stem = block.dataset.stem;
+    const origStem = block.dataset.orig;
+    const origCell = block.querySelector('.col-viewer[data-role="original"]');
+    const rigCell = block.querySelector('.col-viewer[data-role="rig"]');
+
+    origCell.querySelector('.placeholder').outerHTML = buildViewerDom();
+    rigCell.querySelector('.placeholder').outerHTML = buildViewerDom();
+
+    const origWrap = origCell.querySelector('.compare-wrap');
+    const rigWrap = rigCell.querySelector('.compare-wrap');
+
+    const expandBtn = document.createElement('button');
+    expandBtn.className = 'expand-btn';
+    expandBtn.title = 'Expand (Esc to close)';
+    expandBtn.textContent = '⛶';
+    expandBtn.addEventListener('click', e => { e.stopPropagation(); openInModal(block); });
+    rigCell.appendChild(expandBtn);
+
+    const cells = [
+      { wrap: origWrap, canvas: origWrap.querySelector('.cell-canvas') },
+      { wrap: rigWrap, canvas: rigWrap.querySelector('.cell-canvas') },
+    ];
+    const splitters = cells.map(c => c.wrap.querySelector('.splitter'));
+    const inputs = cells.map(c => c.wrap.querySelector('.input-catcher'));
+    const viewers = cells.map(c => new CellViewer(c.canvas));
+    viewers.forEach(v => _activeViewers.add(v));
+
+    const ctrl = makeAssetController(cells, splitters, inputs, viewers);
+
+    viewers[0].load(`${CDN}/${origStem}_orig.glb`).then(() => ctrl.markReady()).catch(e => console.warn('orig load failed', origStem, e));
+    viewers[1].load(`${CDN}/${stem}.glb`).then(() => ctrl.markReady()).catch(e => console.warn('rig load failed', stem, e));
+  }
+
+  // ===== Modal expand ===== //
+  const showcaseModal = document.getElementById('showcase-modal');
+  const showcaseModalSlot = showcaseModal.querySelector('.modal-slot');
+  const showcaseModalClose = showcaseModal.querySelector('.modal-close');
+  let blockPlaceholder = null;
+
+  function markAllDirty() { for (const v of _activeViewers) v._dirty = true; }
+
+  function openInModal(block) {
+    if (blockPlaceholder) closeModal();
+    blockPlaceholder = document.createElement('div');
+    blockPlaceholder.className = 'block-placeholder';
+    blockPlaceholder.style.background = '#1a1b22';
+    blockPlaceholder.style.border = '1px dashed #2a2b35';
+    blockPlaceholder.style.borderRadius = '8px';
+    blockPlaceholder.style.minHeight = block.getBoundingClientRect().height + 'px';
+    block.parentNode.replaceChild(blockPlaceholder, block);
+    showcaseModalSlot.appendChild(block);
+    showcaseModal.classList.add('open');
+    requestAnimationFrame(() => { markAllDirty(); requestAnimationFrame(markAllDirty); });
+  }
+
+  function closeModal() {
+    if (!blockPlaceholder) return;
+    const block = showcaseModalSlot.querySelector('.asset-block');
+    if (block) blockPlaceholder.parentNode.replaceChild(block, blockPlaceholder);
+    blockPlaceholder = null;
+    showcaseModal.classList.remove('open');
+    requestAnimationFrame(markAllDirty);
+  }
+
+  showcaseModalClose.addEventListener('click', closeModal);
+  showcaseModal.addEventListener('click', e => { if (e.target === showcaseModal) closeModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && showcaseModal.classList.contains('open')) closeModal(); });
+
+  // ===== Category thumbnail switching ===== //
+  document.querySelectorAll('.category-thumbs .thumb').forEach(thumb => {
+    thumb.addEventListener('click', () => {
+      const category = thumb.closest('.showcase-category');
+      const stem = thumb.dataset.stem;
+      category.querySelectorAll('.category-thumbs .thumb').forEach(t => t.classList.remove('active'));
+      thumb.classList.add('active');
+      category.querySelectorAll('.category-viewer .asset-block').forEach(b => {
+        b.classList.toggle('active', b.dataset.stem === stem);
+      });
+      markAllDirty();
+    });
+  });
+
+  document.querySelectorAll('.category-viewer .asset-block').forEach(block => {
+    const btn = block.querySelector('.load-btn');
+    if (btn) btn.addEventListener('click', () => activateAsset(block));
+  });
+
+  // ===== Preload first asset in each category ===== //
+  document.querySelectorAll('.showcase-category').forEach(cat => {
+    const firstBlock = cat.querySelector('.category-viewer .asset-block.active');
+    if (firstBlock && !firstBlock.querySelector('.compare-wrap')) {
+      activateAsset(firstBlock);
+    }
+  });
+</script>
+
+<script>
+  // ===== Scroll-based active nav highlighting ===== //
+  (function () {
+    const nav = document.getElementById('topnav');
+    if (!nav) return;
+    const links = Array.from(nav.querySelectorAll('a[href^="#"]'));
+    const sections = links.map(a => document.getElementById(a.getAttribute('href').slice(1))).filter(Boolean);
+
+    function updateActive() {
+      const scrollY = window.scrollY + 120;
+      let activeId = '';
+      for (const sec of sections) {
+        if (sec.offsetTop <= scrollY) activeId = sec.id;
+      }
+      // At page bottom, force the last section active — a short final section
+      // (BibTeX) never reaches the scrollY+120 line otherwise.
+      if (sections.length && window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) {
+        activeId = sections[sections.length - 1].id;
+      }
+      links.forEach(a => {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + activeId);
+      });
+    }
+
+    window.addEventListener('scroll', updateActive, { passive: true });
+    updateActive();
+  })();
+</script>
+
+</body>
+</html>
