@@ -171,18 +171,17 @@
       margin-left: auto;
       margin-right: auto;
     }
-    /* All author names are visually identical — same gray, same weight. Identity
-       (corresponding / lead / co-first) is conveyed ONLY by the *&#x2020;&#x2021;
-       superscripts + the legend below. A linked name reveals itself on hover:
-       color shifts to accent + an underline appears. */
+    /* Author names are uniform gray; identity is shown ONLY by the *&#x2020;&#x2021;
+       superscripts + the legend below. A name WITH a homepage link is shown in
+       accent blue as a standing "clickable" cue, and gains an underline on hover.
+       Names without a link stay gray. */
     .hero .authors a {
-      color: inherit;
+      color: #7dd3fc;
       text-decoration: none;
       border-bottom: 1px solid transparent;
-      transition: color 0.2s ease, border-color 0.2s ease;
+      transition: border-color 0.2s ease;
     }
     .hero .authors a:hover {
-      color: #7dd3fc;
       border-bottom-color: #7dd3fc;
     }
     /* Superscript symbols (*&#x2020;&#x2021;) use one neutral gray, identical in the
