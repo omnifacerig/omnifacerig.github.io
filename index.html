@@ -1106,7 +1106,7 @@
       <span class="author-lead"><a href="https://www.linkedin.com/in/rakesh-r-3848538/" target="_blank" rel="noopener">Rakesh Ranjan</a><sup>&#x2021;</sup></span>
     </div>
     <div class="affiliation">Reality Labs, Meta</div>
-    <div class="author-notes"><sup>&#x2020;</sup>Equal Contribution &nbsp; <sup>&#x2021;</sup>Project lead &nbsp; <sup>*</sup>Corresponding author</div>
+    <div class="author-notes"><sup>&#x2020;</sup>Equal contribution &nbsp; <sup>&#x2021;</sup>Project lead &nbsp; <sup>*</sup>Corresponding author</div>
     <div class="action-buttons">
       <a class="action-btn" href="https://arxiv.org/abs/2606.08043" target="_blank" rel="noopener">
         <svg class="paper-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -1162,10 +1162,10 @@
   <div class="container">
     <div class="section-label">Abstract</div>
     <div class="abstract">
-      <p>Facial rigging—creating FACS-based blendshapes together with inner-mouth geometry (teeth, gums, and tongue)—remains a major bottleneck in 3D character production. Existing pipelines still require substantial designer effort, especially for manual landmark annotation, per-character template adjustment, and inner-mouth placement.</p>
-      <p>We present <strong>OmniFaceRig</strong>, a fully automatic end-to-end pipeline that converts a static surface-only 3D character mesh, with no pre-modeled oral cavity, into an inner-mouth-aware FACS rig with up to 155 blendshapes, procedurally fitted teeth, gums, and tongue, and re-packed UV/texture. OmniFaceRig supports diverse topologies—humans, humanoids, long-muzzled animals (e.g., dogs, wolves, foxes), and short-muzzled animals (e.g., cats, bears, rabbits, tigers)—with no manual landmarks, no user-provided templates, and no per-asset setup.</p>
-      <p>The pipeline combines hybrid VLM+CV riggability checking, multi-model face parsing, dense keypoint-driven template registration, procedural inner-mouth construction, and collision-aware blendshape transfer. For non-human characters, OmniFaceRig selects topology-specific face and inner-mouth templates and uses collision-aware inner-mouth fitting to reduce teeth-face intersections without exposing users to category-specific tuning.</p>
-      <p>We also publicly release <strong>Omni-Bench</strong>, a freely available benchmark dataset of 1,000+ biped 3D characters with FACS facial blendshapes and inner-mouth geometry, spanning humans, humanoids, cats, dogs, and other animals. Experiments show high final rigging success on screened Omni-Bench inputs, nearly complete face detection recall from the segmentation ensemble, reliable inner-mouth placement with low penetration, and 20–30&nbsp;s end-to-end processing time per asset on a single A100 GPU, including data I/O. Together, OmniFaceRig provides an automatic path from static generated characters to animation-ready facial rigs across both human and non-human topologies.</p>
+      <p>Facial rigging—creating Facial Action Coding System (FACS) blendshapes together with inner-mouth geometry (teeth, gums, and tongue)—remains a major bottleneck in 3D character production. Existing pipelines still depend on substantial designer effort: inner-mouth components are commonly placed by hand, and landmark annotation and per-character template adjustments are routine.</p>
+      <p>We present <strong>OmniFaceRig</strong>, a fully automatic end-to-end pipeline that converts a static surface-only 3D character mesh, with no pre-modeled oral cavity, into an inner-mouth-aware FACS rig with up to 155 blendshapes, procedurally fitted teeth, gums, and tongue, and re-packed UV/texture. OmniFaceRig supports diverse topologies, including humans, humanoids, long-muzzled animals (elongated snouts; e.g., dogs, wolves, foxes), and short-muzzled animals (compact or nearly absent snouts; e.g., cats, bears, rabbits, tigers), with no manual landmarks, no user-provided templates, and no per-asset template setup.</p>
+      <p>OmniFaceRig combines a hybrid vision-language model (VLM) and computer vision (CV) riggability checker, a four-model face detection and segmentation ensemble (face landmark detection, Sapiens, SAM&nbsp;3, and fine-tuned Sapiens), dense keypoint-driven template registration, procedural inner-mouth construction, and collision-aware blendshape transfer. To handle non-human characters, it automatically selects from a small library of topology-specific templates with a nose-landmark-free design and uses as-rigid-as-possible (ARAP) deformation with signed-distance-field (SDF) constraints for inner-mouth fitting to reduce teeth–face intersections.</p>
+      <p>We also release <strong>Omni-Bench</strong>, an open-source benchmark of 1,000+ biped 3D characters rigged with FACS facial blendshapes and inner-mouth geometry, spanning realistic humans, humanoids, cats, dogs, and other animals. Experiments show high final rigging success on screened Omni-Bench candidate inputs, nearly complete face detection recall from the segmentation ensemble, reliable inner-mouth placement with low penetration, and 20–30&nbsp;s end-to-end latency on a single A100 GPU including data I/O. Together, OmniFaceRig provides an automatic path from static generated characters to animation-ready facial rigs across both human and non-human topologies.</p>
     </div>
     <div class="highlight-stats">
       <div class="hl"><div class="hl-num">155</div><div class="hl-desc">FACS blendshapes per rig, including procedurally generated teeth, gums &amp; tongue</div></div>
@@ -1182,7 +1182,7 @@
     <div class="section-label">Showcase</div>
     <h2 class="section-h2">Explore rigged characters in 3D</h2>
     <p class="showcase-note">
-      Each card below shows <strong>three columns</strong>: the input body image, the
+      Each card below shows <strong>three columns</strong>: a front-view image of the character, the
       original surface-only GLB, and the rigged GLB with FACS animation. Click the
       <strong>&#x25B6;&nbsp;Load</strong> button on a card to activate both 3D viewers at once.
       Inside each viewer, drag the splitter to toggle <strong>texture</strong> (left half)
@@ -1205,7 +1205,7 @@
             <div class="col-image">
               <img src="dataset_viewer/older_surfer_dude_cleaned_body.png" alt="older_surfer_dude_cleaned" loading="lazy">
               <div class="col-tag" style="background-color:#ffd76b">Human</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1220,7 +1220,7 @@
             <div class="col-image">
               <img src="dataset_viewer/100_body.png" alt="100" loading="lazy">
               <div class="col-tag" style="background-color:#ffd76b">Human</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1235,7 +1235,7 @@
             <div class="col-image">
               <img src="dataset_viewer/253_body.png" alt="253" loading="lazy">
               <div class="col-tag" style="background-color:#ffd76b">Human</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1250,7 +1250,7 @@
             <div class="col-image">
               <img src="dataset_viewer/013_cleaned_body.png" alt="013_cleaned" loading="lazy">
               <div class="col-tag" style="background-color:#ffd76b">Human</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1265,7 +1265,7 @@
             <div class="col-image">
               <img src="dataset_viewer/007_body.png" alt="007" loading="lazy">
               <div class="col-tag" style="background-color:#ffd76b">Human</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1280,7 +1280,7 @@
             <div class="col-image">
               <img src="dataset_viewer/010_body.png" alt="010" loading="lazy">
               <div class="col-tag" style="background-color:#ffd76b">Human</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1295,7 +1295,7 @@
             <div class="col-image">
               <img src="dataset_viewer/019_body.png" alt="019" loading="lazy">
               <div class="col-tag" style="background-color:#ffd76b">Human</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1310,7 +1310,7 @@
             <div class="col-image">
               <img src="dataset_viewer/045_body.png" alt="045" loading="lazy">
               <div class="col-tag" style="background-color:#ffd76b">Human</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1325,7 +1325,7 @@
             <div class="col-image">
               <img src="dataset_viewer/079_body.png" alt="079" loading="lazy">
               <div class="col-tag" style="background-color:#ffd76b">Human</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1340,7 +1340,7 @@
             <div class="col-image">
               <img src="dataset_viewer/074_body.png" alt="074" loading="lazy">
               <div class="col-tag" style="background-color:#ffd76b">Human</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1355,7 +1355,7 @@
             <div class="col-image">
               <img src="dataset_viewer/075_body.png" alt="075" loading="lazy">
               <div class="col-tag" style="background-color:#ffd76b">Human</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1370,7 +1370,7 @@
             <div class="col-image">
               <img src="dataset_viewer/076_body.png" alt="076" loading="lazy">
               <div class="col-tag" style="background-color:#ffd76b">Human</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1433,7 +1433,7 @@
             <div class="col-image">
               <img src="dataset_viewer/moss_covered_dryad_android_body.png" alt="moss_covered_dryad_android" loading="lazy">
               <div class="col-tag" style="background-color:#a3e0c0">Humanoid</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1448,7 +1448,7 @@
             <div class="col-image">
               <img src="dataset_viewer/009_body.png" alt="009" loading="lazy">
               <div class="col-tag" style="background-color:#a3e0c0">Humanoid</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1463,7 +1463,7 @@
             <div class="col-image">
               <img src="dataset_viewer/137_body.png" alt="137" loading="lazy">
               <div class="col-tag" style="background-color:#a3e0c0">Humanoid</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1478,7 +1478,7 @@
             <div class="col-image">
               <img src="dataset_viewer/202_body.png" alt="202" loading="lazy">
               <div class="col-tag" style="background-color:#a3e0c0">Humanoid</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1493,7 +1493,7 @@
             <div class="col-image">
               <img src="dataset_viewer/008_body.png" alt="008" loading="lazy">
               <div class="col-tag" style="background-color:#a3e0c0">Humanoid</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1508,7 +1508,7 @@
             <div class="col-image">
               <img src="dataset_viewer/015_body.png" alt="015" loading="lazy">
               <div class="col-tag" style="background-color:#a3e0c0">Humanoid</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1523,7 +1523,7 @@
             <div class="col-image">
               <img src="dataset_viewer/017_body.png" alt="017" loading="lazy">
               <div class="col-tag" style="background-color:#a3e0c0">Humanoid</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1538,7 +1538,7 @@
             <div class="col-image">
               <img src="dataset_viewer/160_body.png" alt="160" loading="lazy">
               <div class="col-tag" style="background-color:#a3e0c0">Humanoid</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1553,7 +1553,7 @@
             <div class="col-image">
               <img src="dataset_viewer/200_body.png" alt="200" loading="lazy">
               <div class="col-tag" style="background-color:#a3e0c0">Humanoid</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1568,7 +1568,7 @@
             <div class="col-image">
               <img src="dataset_viewer/204_body.png" alt="204" loading="lazy">
               <div class="col-tag" style="background-color:#a3e0c0">Humanoid</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1583,7 +1583,7 @@
             <div class="col-image">
               <img src="dataset_viewer/205_body.png" alt="205" loading="lazy">
               <div class="col-tag" style="background-color:#a3e0c0">Humanoid</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1598,7 +1598,7 @@
             <div class="col-image">
               <img src="dataset_viewer/213_body.png" alt="213" loading="lazy">
               <div class="col-tag" style="background-color:#a3e0c0">Humanoid</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1661,7 +1661,7 @@
             <div class="col-image">
               <img src="dataset_viewer/196_body.png" alt="196" loading="lazy">
               <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1676,7 +1676,7 @@
             <div class="col-image">
               <img src="dataset_viewer/180_body.png" alt="180" loading="lazy">
               <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1691,7 +1691,7 @@
             <div class="col-image">
               <img src="dataset_viewer/185_body.png" alt="185" loading="lazy">
               <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1706,7 +1706,7 @@
             <div class="col-image">
               <img src="dataset_viewer/111_dog_body.png" alt="111_dog" loading="lazy">
               <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1721,7 +1721,7 @@
             <div class="col-image">
               <img src="dataset_viewer/000_dog_body.png" alt="000_dog" loading="lazy">
               <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1736,7 +1736,7 @@
             <div class="col-image">
               <img src="dataset_viewer/057_dog_body.png" alt="057_dog" loading="lazy">
               <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1751,7 +1751,7 @@
             <div class="col-image">
               <img src="dataset_viewer/065_body.png" alt="065" loading="lazy">
               <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1766,7 +1766,7 @@
             <div class="col-image">
               <img src="dataset_viewer/059_body.png" alt="059" loading="lazy">
               <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1781,7 +1781,7 @@
             <div class="col-image">
               <img src="dataset_viewer/063_body.png" alt="063" loading="lazy">
               <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1796,7 +1796,7 @@
             <div class="col-image">
               <img src="dataset_viewer/179_body.png" alt="179" loading="lazy">
               <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1811,7 +1811,7 @@
             <div class="col-image">
               <img src="dataset_viewer/262_body.png" alt="262" loading="lazy">
               <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1826,7 +1826,7 @@
             <div class="col-image">
               <img src="dataset_viewer/279_body.png" alt="279" loading="lazy">
               <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1841,7 +1841,7 @@
             <div class="col-image">
               <img src="dataset_viewer/267_body.png" alt="267" loading="lazy">
               <div class="col-tag" style="background-color:#87ceeb">Long-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1907,7 +1907,7 @@
             <div class="col-image">
               <img src="dataset_viewer/bear_01_body.png" alt="bear_01" loading="lazy">
               <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1922,7 +1922,7 @@
             <div class="col-image">
               <img src="dataset_viewer/053_body.png" alt="053" loading="lazy">
               <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1937,7 +1937,7 @@
             <div class="col-image">
               <img src="dataset_viewer/264_body.png" alt="264" loading="lazy">
               <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1952,7 +1952,7 @@
             <div class="col-image">
               <img src="dataset_viewer/190_body.png" alt="190" loading="lazy">
               <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1967,7 +1967,7 @@
             <div class="col-image">
               <img src="dataset_viewer/099_body.png" alt="099" loading="lazy">
               <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1982,7 +1982,7 @@
             <div class="col-image">
               <img src="dataset_viewer/122_cat_body.png" alt="122_cat" loading="lazy">
               <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -1997,7 +1997,7 @@
             <div class="col-image">
               <img src="dataset_viewer/159_cat_body.png" alt="159_cat" loading="lazy">
               <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -2012,7 +2012,7 @@
             <div class="col-image">
               <img src="dataset_viewer/193_cat_body.png" alt="193_cat" loading="lazy">
               <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -2027,7 +2027,7 @@
             <div class="col-image">
               <img src="dataset_viewer/136_body.png" alt="136" loading="lazy">
               <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -2042,7 +2042,7 @@
             <div class="col-image">
               <img src="dataset_viewer/061_body.png" alt="061" loading="lazy">
               <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -2057,7 +2057,7 @@
             <div class="col-image">
               <img src="dataset_viewer/161_body.png" alt="161" loading="lazy">
               <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -2072,7 +2072,7 @@
             <div class="col-image">
               <img src="dataset_viewer/176_body.png" alt="176" loading="lazy">
               <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -2087,7 +2087,7 @@
             <div class="col-image">
               <img src="dataset_viewer/272_body.png" alt="272" loading="lazy">
               <div class="col-tag" style="background-color:#ff9c6b">Short-muzzled</div>
-              <div class="col-label">Foreboard Image</div>
+              <div class="col-label">Front View</div>
             </div>
             <div class="col-viewer" data-role="original">
               <div class="placeholder"><button class="load-btn">&#x25B6; Load</button></div>
@@ -2190,7 +2190,7 @@
           </div>
           <div class="carousel-slide">
             <img src="assets/failure_case.png" alt="Failure cases: bird, fish-like, insect, seahorse-like" />
-            <div class="caption">Failure cases — characters whose facial topology falls outside our current template families (bird with a sharp beak, fish-like flat snout, insect with oversized compound eyes, seahorse-like elongated snout).</div>
+            <div class="caption">Failure cases — characters whose facial topology falls outside our current template families (bird with a sharp beak, wide-mouthed fish-like face, insect with oversized compound eyes, seahorse-like elongated snout).</div>
           </div>
         </div>
       </div>
@@ -2201,9 +2201,9 @@
     </div>
     <div class="quant-grid">
       <div class="quant-card"><div class="quant-num">99.0%</div><div class="quant-label">Final rigging success (human + humanoid)</div></div>
-      <div class="quant-card"><div class="quant-num">0.85&nbsp;mm</div><div class="quant-label">Mean vertex error (MAE)</div></div>
-      <div class="quant-card"><div class="quant-num">0.05%</div><div class="quant-label">Inner-mouth penetration (3.4&times; better)</div></div>
-      <div class="quant-card"><div class="quant-num">~100%</div><div class="quant-label">Face detection recall (ensemble)</div></div>
+      <div class="quant-card"><div class="quant-num">0.92&nbsp;mm</div><div class="quant-label">Mean vertex error (MAE, human + humanoid)</div></div>
+      <div class="quant-card"><div class="quant-num">0.08%</div><div class="quant-label">Inner-mouth penetration (human + humanoid)</div></div>
+      <div class="quant-card"><div class="quant-num">~99%</div><div class="quant-label">Face detection recall (four-model ensemble)</div></div>
       <div class="quant-card"><div class="quant-num">87.3%</div><div class="quant-label">Segmentation mIoU (vs 62.1%)</div></div>
     </div>
   </div>
@@ -2243,12 +2243,12 @@
     </div>
 
     <div class="dataset-text">
-      <p>To facilitate future research in automatic facial rigging, we release <strong>Omni-Bench</strong>, to our knowledge the first open-source benchmark of biped 3D characters with FACS facial blendshapes and inner-mouth geometry (teeth, gums, and tongue). The public release contains <strong>1,000+ rigged biped 3D characters</strong>, including the 1,000-character benchmark described in the paper: 500 human and humanoid characters and 500 animals (150 cats across 10 breeds, 150 dogs across 10 breeds, and 200 other common animals including bears, tigers, lions, foxes, wolves, rabbits, and deer). All assets are released in T-pose with up to 12 appearance variations and full generation-pipeline metadata (text prompt, intermediate 2D reference image, final 3D mesh).</p>
-      <p>Omni-Bench stands out in three critical ways. First, it uniquely supports both human and animal characters within a unified rigging framework. Second, every model is equipped with a complete set of auto-generated FACS blendshapes (up to 155 shapes) that explicitly include teeth, gums, and tongue — a feature absent in nearly all existing large-scale datasets. Third, each asset includes the complete generation pipeline data (text + reference image + 3D mesh), making it a valuable resource for text-to-3D generation and multimodal research.</p>
+      <p>To facilitate future research in automatic facial rigging, we release <strong>Omni-Bench</strong>, to our knowledge the first open-source benchmark of biped 3D characters with FACS facial blendshapes and inner-mouth geometry (teeth, gums, and tongue). The public release contains <strong>1,000+ rigged biped 3D characters</strong> whose source meshes were generated with <a href="https://arxiv.org/abs/2605.26137" target="_blank" rel="noopener">AssetGen</a>. They span realistic and stylized humans, humanoids in fantasy, science-fiction, nature, and elemental styles, domestic cats and dogs, and wild felines and canines, covering both short- and long-muzzled animal faces. All assets are in biped T-pose and processed by the same automatic pipeline. The quantitative experiments in the paper use smaller evaluation subsets with independent artist-authored reference rigs.</p>
+      <p>Omni-Bench stands out in three ways. First, it supports both human and animal characters within a unified rigging framework. Second, every model is equipped with a complete set of auto-generated FACS blendshapes (up to 155 shapes) that explicitly include teeth, gums, and tongue — a feature absent in nearly all existing large-scale datasets. Third, each asset ships with its source mesh and texture, a reference render, face segmentation and keypoint images, the solved face template, and rigs in FBX, glTF, and USDZ formats, supporting research on rigging, face parsing, and facial animation.</p>
     </div>
 
     <div class="dataset-table-title">
-      Comparison with existing 3D facial / character datasets — Omni-Bench is the <strong>only</strong> dataset providing FACS blendshapes with inner-mouth geometry for both humans and animals.
+      Comparison with existing 3D facial / character datasets — to our knowledge, Omni-Bench is the <strong>first</strong> dataset providing FACS blendshapes with inner-mouth geometry for both human and animal full-character assets.
     </div>
     <div class="dataset-table-wrap">
       <table class="dataset-table">
@@ -2261,45 +2261,44 @@
             <th>FACS Blendshapes</th>
             <th>Inner Mouth</th>
             <th>Full Character</th>
-            <th>Text + 2D Image</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td>BFM</td><td class="num">2009</td><td class="num">200</td><td>Human</td>
-            <td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td>
+            <td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td>
           </tr>
           <tr>
             <td>CoMA</td><td class="num">2018</td><td class="num">144</td><td>Human</td>
-            <td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td>
+            <td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td>
           </tr>
           <tr>
             <td>VOCASET</td><td class="num">2019</td><td class="num">12 (4D)</td><td>Human</td>
-            <td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td>
+            <td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td>
           </tr>
           <tr>
             <td>FaceScape</td><td class="num">2020</td><td class="num">16,940</td><td>Human</td>
-            <td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td>
+            <td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td>
           </tr>
           <tr>
-            <td>ICT FaceKit</td><td class="num">2020</td><td>Parametric</td><td>Human</td>
-            <td class="yes">&#x2713;</td><td class="yes">&#x2713;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td>
+            <td>ICT FaceKit</td><td class="num">2020</td><td>1 (Parametric)</td><td>Human</td>
+            <td class="yes">&#x2713;</td><td class="yes">&#x2713;</td><td class="no">&#x2717;</td>
           </tr>
           <tr>
-            <td>Multiface</td><td class="num">2022</td><td class="num">13</td><td>Human</td>
-            <td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td>
+            <td>Multiface</td><td class="num">2022</td><td class="num">13 (Multi-view)</td><td>Human</td>
+            <td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="no">&#x2717;</td>
           </tr>
           <tr>
             <td>RaBit</td><td class="num">2023</td><td class="num">1,500</td><td>Human &amp; Cartoon</td>
-            <td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="yes">&#x2713;</td><td class="no">&#x2717;</td>
+            <td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="yes">&#x2713;</td>
           </tr>
           <tr>
             <td>Anymate</td><td class="num">2025</td><td class="num">230,000</td><td>Human &amp; Animal</td>
-            <td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="yes">&#x2713;</td><td class="no">&#x2717;</td>
+            <td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="yes">&#x2713;</td>
           </tr>
           <tr class="ours">
             <td>Omni-Bench (Ours)</td><td class="num">2026</td><td class="num">1,000+</td><td>Human &amp; Animal</td>
-            <td class="yes">&#x2713;</td><td class="yes">&#x2713;</td><td class="yes">&#x2713;</td><td class="yes">&#x2713;</td>
+            <td class="yes">&#x2713;</td><td class="yes">&#x2713;</td><td class="yes">&#x2713;</td>
           </tr>
         </tbody>
       </table>
