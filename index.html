@@ -6,7 +6,7 @@
   <title>OmniFaceRig: Fully Automatic Inner-Mouth-Aware Face Rigging</title>
   <meta name="description" content="A fully automatic, end-to-end face auto-rigging pipeline that converts surface-only 3D meshes into inner-mouth-aware FACS rigs across diverse character topologies." />
   <meta name="keywords" content="OmniFaceRig, face rigging, automatic face rigging, auto-rigging, FACS, facial blendshapes, blendshapes, inner-mouth geometry, 3D character rigging, facial animation, character animation, 3D avatars, rigged characters, mesh rigging, face parsing, Omni-Bench, 3D character dataset, Reality Labs, Meta" />
-  <meta name="author" content="Chao Wang, Guangyao Ma, John Doublestein, Junming Chen, Yiming Lin, Zhaoen Su, Xiaomin Luo, Shiyang Cheng, Jie Shen, Doug Roble, Dilin Wang, Yilei Li, Rakesh Ranjan" />
+  <meta name="author" content="Chao Wang, Guangyao Ma, John Doublestein, Junming Chen, Yiming Lin, Zhaoen Su, Xiaomin Luo, Yushan Yin, Shiyang Cheng, Jie Shen, Doug Roble, Dilin Wang, Yilei Li, Rakesh Ranjan" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://omnifacerig.github.io/" />
 
@@ -15,7 +15,7 @@
   <meta property="og:site_name" content="OmniFaceRig" />
   <meta property="og:url" content="https://omnifacerig.github.io/" />
   <meta property="og:title" content="OmniFaceRig: Fully Automatic Inner-Mouth-Aware Face Rigging Across Diverse 3D Character Topologies" />
-  <meta property="og:description" content="A fully automatic end-to-end pipeline turning static surface-only 3D meshes into inner-mouth-aware FACS rigs across humans, humanoids, and animals — no manual landmarks or templates. Includes the Omni-Bench dataset of 1,000 rigged characters." />
+  <meta property="og:description" content="A fully automatic end-to-end pipeline turning static surface-only 3D meshes into inner-mouth-aware FACS rigs across humans, humanoids, and animals — no manual landmarks or templates. Includes the Omni-Bench dataset of 1,000+ rigged characters." />
   <meta property="og:image" content="https://omnifacerig.github.io/assets/cover_image.png" />
 
   <!-- Twitter / X card -->
@@ -41,6 +41,7 @@
       {"@type":"Person","name":"Yiming Lin"},
       {"@type":"Person","name":"Zhaoen Su"},
       {"@type":"Person","name":"Xiaomin Luo"},
+      {"@type":"Person","name":"Yushan Yin"},
       {"@type":"Person","name":"Shiyang Cheng"},
       {"@type":"Person","name":"Jie Shen"},
       {"@type":"Person","name":"Doug Roble"},
@@ -171,7 +172,7 @@
       margin-left: auto;
       margin-right: auto;
     }
-    /* Author names are uniform gray; identity is shown ONLY by the *&#x2020;&#x2021;
+    /* Author names are uniform gray; identity is shown ONLY by the &#x2020;&#x2021;*
        superscripts + the legend below. A name WITH a homepage link is shown in
        accent blue as a standing "clickable" cue, and gains an underline on hover.
        Names without a link stay gray. */
@@ -184,7 +185,7 @@
     .hero .authors a:hover {
       border-bottom-color: #7dd3fc;
     }
-    /* Superscript symbols (*&#x2020;&#x2021;) use one neutral gray, identical in the
+    /* Superscript symbols (&#x2020;&#x2021;*) use one neutral gray, identical in the
        author list and the legend below, so both read as the same scheme.
        Blue is reserved to mean "link" only. */
     .hero .authors sup,
@@ -234,17 +235,46 @@
       font-weight: 600;
       text-decoration: none;
       letter-spacing: 0.02em;
-      transition: background 0.15s ease, transform 0.15s ease;
+      box-shadow: 0 8px 24px rgba(6, 104, 225, 0.24);
+      transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
     }
     .hero .action-btn:hover {
       background: #0559C1;
       transform: translateY(-1px);
+      box-shadow: 0 10px 28px rgba(6, 104, 225, 0.32);
     }
     .hero .action-btn svg {
-      width: 18px;
-      height: 18px;
-      fill: #fff;
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
       flex-shrink: 0;
+    }
+    .hero .action-btn .paper-icon {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .hero .action-btn.dataset-btn {
+      background: linear-gradient(135deg, #6d28d9, #7c3aed);
+      box-shadow: 0 8px 24px rgba(124, 58, 237, 0.25);
+    }
+    .hero .action-btn.dataset-btn:hover {
+      background: linear-gradient(135deg, #5b21b6, #6d28d9);
+      box-shadow: 0 10px 28px rgba(124, 58, 237, 0.34);
+    }
+    .hero .action-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 7px;
+      border: 1px solid rgba(255,255,255,0.28);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.14);
+      font-size: 9px;
+      font-weight: 700;
+      line-height: 1.3;
+      letter-spacing: 0.09em;
     }
 
     /* ===== Sticky top navigation ===== */
@@ -1060,30 +1090,36 @@
     </h1>
     <div class="venue">SIGGRAPH Asia 2026 &middot; ACM TOG</div>
     <div class="authors">
-      <span class="author-corresponding"><a href="https://chaowang15.github.io/" target="_blank" rel="noopener">Chao Wang</a><sup>*&#x2020;&#x2021;</sup></span>,
-      <span class="author-cofirst">Guangyao Ma<sup>*</sup></span>,
-      <span class="author-cofirst">John Doublestein<sup>*</sup></span>,
+      <span class="author-corresponding"><a href="https://chaowang15.github.io/" target="_blank" rel="noopener">Chao Wang</a><sup>&#x2020;,&#x2021;,*</sup></span>,
+      <span class="author-cofirst">Guangyao Ma<sup>&#x2020;</sup></span>,
+      <span class="author-cofirst">John Doublestein<sup>&#x2020;</sup></span>,
       Junming Chen,
       <a href="https://yiminglin-ai.github.io/" target="_blank" rel="noopener">Yiming Lin</a>,
       Zhaoen Su,
       Xiaomin Luo,
+      Yushan Yin,
       Shiyang Cheng,
       Jie Shen,
       Doug Roble,
       <a href="https://wdilin.github.io/" target="_blank" rel="noopener">Dilin Wang</a>,
-      <span class="author-lead">Yilei Li<sup>&#x2020;</sup></span>,
-      <span class="author-lead"><a href="https://www.linkedin.com/in/rakesh-r-3848538/" target="_blank" rel="noopener">Rakesh Ranjan</a><sup>&#x2020;</sup></span>
+      <span class="author-lead">Yilei Li<sup>&#x2021;</sup></span>,
+      <span class="author-lead"><a href="https://www.linkedin.com/in/rakesh-r-3848538/" target="_blank" rel="noopener">Rakesh Ranjan</a><sup>&#x2021;</sup></span>
     </div>
-    <div class="affiliation">Meta Reality Labs</div>
-    <div class="author-notes"><sup>*</sup>Equal contribution &nbsp; <sup>&#x2020;</sup>Project lead &nbsp; <sup>&#x2021;</sup>Corresponding author</div>
+    <div class="affiliation">Reality Labs, Meta</div>
+    <div class="author-notes"><sup>&#x2020;</sup>Equal Contribution &nbsp; <sup>&#x2021;</sup>Project lead &nbsp; <sup>*</sup>Corresponding author</div>
     <div class="action-buttons">
       <a class="action-btn" href="https://arxiv.org/abs/2606.08043" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h5v7h7v9H6z"/></svg>
+        <svg class="paper-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 2.75h8l4 4v14.5H6z" />
+          <path d="M14 2.75v4h4" />
+          <path d="m9.2 11 5.6 6m0-6-5.6 6" />
+        </svg>
         Paper (arXiv)
       </a>
-      <a class="action-btn" href="#">
-        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 4.69 2 8v8c0 3.31 4.48 6 10 6s10-2.69 10-6V8c0-3.31-4.48-6-10-6zm0 2c4.42 0 8 1.79 8 4s-3.58 4-8 4-8-1.79-8-4 3.58-4 8-4zm8 12c0 2.21-3.58 4-8 4s-8-1.79-8-4v-2.23c1.88 1.33 4.79 2.23 8 2.23s6.12-.9 8-2.23V16zm0-4c0 2.21-3.58 4-8 4s-8-1.79-8-4V9.77c1.88 1.33 4.79 2.23 8 2.23s6.12-.9 8-2.23V12z"/></svg>
-        Dataset (Coming Soon)
+      <a class="action-btn dataset-btn" href="https://github.com/facebookresearch/omnifacerig" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .7a11.5 11.5 0 0 0-3.64 22.41c.58.11.79-.25.79-.56v-2.24c-3.22.7-3.9-1.37-3.9-1.37-.52-1.34-1.28-1.69-1.28-1.69-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.57-.29-5.27-1.28-5.27-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.47.11-3.05 0 0 .97-.31 3.16 1.18a10.9 10.9 0 0 1 5.75 0c2.2-1.49 3.16-1.18 3.16-1.18.63 1.58.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.71 5.38-5.29 5.67.42.36.79 1.06.79 2.14v3.18c0 .31.21.68.8.56A11.5 11.5 0 0 0 12 .7Z"/></svg>
+        Dataset
+        <span class="action-badge">NEW</span>
       </a>
     </div>
   </div>
@@ -1129,11 +1165,11 @@
       <p>Facial rigging—creating FACS-based blendshapes together with inner-mouth geometry (teeth, gums, and tongue)—remains a major bottleneck in 3D character production. Existing pipelines still require substantial designer effort, especially for manual landmark annotation, per-character template adjustment, and inner-mouth placement.</p>
       <p>We present <strong>OmniFaceRig</strong>, a fully automatic end-to-end pipeline that converts a static surface-only 3D character mesh, with no pre-modeled oral cavity, into an inner-mouth-aware FACS rig with up to 155 blendshapes, procedurally fitted teeth, gums, and tongue, and re-packed UV/texture. OmniFaceRig supports diverse topologies—humans, humanoids, long-muzzled animals (e.g., dogs, wolves, foxes), and short-muzzled animals (e.g., cats, bears, rabbits, tigers)—with no manual landmarks, no user-provided templates, and no per-asset setup.</p>
       <p>The pipeline combines hybrid VLM+CV riggability checking, multi-model face parsing, dense keypoint-driven template registration, procedural inner-mouth construction, and collision-aware blendshape transfer. For non-human characters, OmniFaceRig selects topology-specific face and inner-mouth templates and uses collision-aware inner-mouth fitting to reduce teeth-face intersections without exposing users to category-specific tuning.</p>
-      <p>We also publicly release <strong>Omni-Bench</strong>, a freely available benchmark dataset of 1,000 biped 3D characters with FACS facial blendshapes and inner-mouth geometry, spanning humans, humanoids, cats, dogs, and other animals. Experiments show high final rigging success on screened Omni-Bench inputs, nearly complete face detection recall from the segmentation ensemble, reliable inner-mouth placement with low penetration, and 20–30&nbsp;s end-to-end processing time per asset on a single A100 GPU, including data I/O. Together, OmniFaceRig provides an automatic path from static generated characters to animation-ready facial rigs across both human and non-human topologies.</p>
+      <p>We also publicly release <strong>Omni-Bench</strong>, a freely available benchmark dataset of 1,000+ biped 3D characters with FACS facial blendshapes and inner-mouth geometry, spanning humans, humanoids, cats, dogs, and other animals. Experiments show high final rigging success on screened Omni-Bench inputs, nearly complete face detection recall from the segmentation ensemble, reliable inner-mouth placement with low penetration, and 20–30&nbsp;s end-to-end processing time per asset on a single A100 GPU, including data I/O. Together, OmniFaceRig provides an automatic path from static generated characters to animation-ready facial rigs across both human and non-human topologies.</p>
     </div>
     <div class="highlight-stats">
       <div class="hl"><div class="hl-num">155</div><div class="hl-desc">FACS blendshapes per rig, including procedurally generated teeth, gums &amp; tongue</div></div>
-      <div class="hl"><div class="hl-num">1,000</div><div class="hl-desc">rigged biped characters released in the open Omni-Bench benchmark</div></div>
+      <div class="hl"><div class="hl-num">1,000+</div><div class="hl-desc">rigged biped characters released in the open Omni-Bench benchmark</div></div>
       <div class="hl"><div class="hl-num">20&ndash;30s</div><div class="hl-desc">end-to-end per asset on a single A100 GPU, including data I/O</div></div>
       <div class="hl"><div class="hl-num">4</div><div class="hl-desc">topology categories: human, humanoid, long- &amp; short-muzzled animals</div></div>
     </div>
@@ -2203,11 +2239,11 @@
   <div class="container-wide">
     <div class="dataset-figure">
       <img src="assets/omnibench_dataset.png" alt="Omni-Bench dataset overview: diverse rigged 3D characters spanning humans, humanoids, cats, dogs, and other animals." />
-      <div class="caption">Omni-Bench overview — 1,000 biped 3D characters with FACS facial blendshapes and inner-mouth geometry, spanning realistic humans, humanoid characters, cats, dogs, and a long tail of other common animals.</div>
+      <div class="caption">Omni-Bench overview — 1,000+ biped 3D characters with FACS facial blendshapes and inner-mouth geometry, spanning realistic humans, humanoid characters, cats, dogs, and a long tail of other common animals.</div>
     </div>
 
     <div class="dataset-text">
-      <p>To facilitate future research in automatic facial rigging, we release <strong>Omni-Bench</strong>, to our knowledge the first open-source benchmark of biped 3D characters with FACS facial blendshapes and inner-mouth geometry (teeth, gums, and tongue). Omni-Bench contains <strong>1,000 rigged biped 3D characters</strong>, split into 500 human and humanoid characters and 500 animals (150 cats across 10 breeds, 150 dogs across 10 breeds, and 200 other common animals including bears, tigers, lions, foxes, wolves, rabbits, and deer). All assets are released in T-pose with up to 12 appearance variations and full generation-pipeline metadata (text prompt, intermediate 2D reference image, final 3D mesh).</p>
+      <p>To facilitate future research in automatic facial rigging, we release <strong>Omni-Bench</strong>, to our knowledge the first open-source benchmark of biped 3D characters with FACS facial blendshapes and inner-mouth geometry (teeth, gums, and tongue). The public release contains <strong>1,000+ rigged biped 3D characters</strong>, including the 1,000-character benchmark described in the paper: 500 human and humanoid characters and 500 animals (150 cats across 10 breeds, 150 dogs across 10 breeds, and 200 other common animals including bears, tigers, lions, foxes, wolves, rabbits, and deer). All assets are released in T-pose with up to 12 appearance variations and full generation-pipeline metadata (text prompt, intermediate 2D reference image, final 3D mesh).</p>
       <p>Omni-Bench stands out in three critical ways. First, it uniquely supports both human and animal characters within a unified rigging framework. Second, every model is equipped with a complete set of auto-generated FACS blendshapes (up to 155 shapes) that explicitly include teeth, gums, and tongue — a feature absent in nearly all existing large-scale datasets. Third, each asset includes the complete generation pipeline data (text + reference image + 3D mesh), making it a valuable resource for text-to-3D generation and multimodal research.</p>
     </div>
 
@@ -2262,7 +2298,7 @@
             <td class="no">&#x2717;</td><td class="no">&#x2717;</td><td class="yes">&#x2713;</td><td class="no">&#x2717;</td>
           </tr>
           <tr class="ours">
-            <td>Omni-Bench (Ours)</td><td class="num">2026</td><td class="num">1,000</td><td>Human &amp; Animal</td>
+            <td>Omni-Bench (Ours)</td><td class="num">2026</td><td class="num">1,000+</td><td>Human &amp; Animal</td>
             <td class="yes">&#x2713;</td><td class="yes">&#x2713;</td><td class="yes">&#x2713;</td><td class="yes">&#x2713;</td>
           </tr>
         </tbody>
@@ -2280,7 +2316,7 @@
       <button class="citation-copy" onclick="navigator.clipboard.writeText(document.querySelector('.citation-block pre').textContent).then(()=>{this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)})">Copy</button>
 <pre>@article{wang2026omnifacerig,
   title={OmniFaceRig: Fully Automatic Inner-Mouth-Aware Face Rigging Across Diverse 3D Character Topologies},
-  author={Wang, Chao and Ma, Guangyao and Doublestein, John and Chen, Junming and Lin, Yiming and Su, Zhaoen and Luo, Xiaomin and Cheng, Shiyang and Shen, Jie and Roble, Doug and Wang, Dilin and Li, Yilei and Ranjan, Rakesh},
+  author={Wang, Chao and Ma, Guangyao and Doublestein, John and Chen, Junming and Lin, Yiming and Su, Zhaoen and Luo, Xiaomin and Yin, Yushan and Cheng, Shiyang and Shen, Jie and Roble, Doug and Wang, Dilin and Li, Yilei and Ranjan, Rakesh},
   journal={arXiv preprint arXiv:2606.08043},
   year={2026}
 }</pre>
